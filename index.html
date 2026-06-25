@@ -1,158 +1,254 @@
-import { createClient } from "@supabase/supabase-js";
-import OpenAI from "openai";
-import ws from "ws";
-import * as dotenv from "dotenv";
-dotenv.config();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NZ Job Market Intelligence</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #111827; color: #94a3b8; font-family: 'Courier New', monospace; min-height: 100vh; }
+  .grid-bg { position: fixed; inset: 0; background-image: linear-gradient(rgba(148,163,184,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,0.04) 1px, transparent 1px); background-size: 32px 32px; pointer-events: none; z-index: 0; }
+  .container { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+  header { border-bottom: 1px solid rgba(148,163,184,0.15); padding: 20px 0; }
+  header .inner { display: flex; align-items: flex-end; justify-content: space-between; }
+  .logo { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(148,163,184,0.4); margin-bottom: 4px; }
+  h1 { font-size: 20px; color: #e2e8f0; font-weight: normal; letter-spacing: 0.05em; text-transform: uppercase; }
+  .meta { text-align: right; font-size: 10px; color: rgba(148,163,184,0.35); line-height: 1.8; letter-spacing: 0.05em; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: rgba(148,163,184,0.1); border: 1px solid rgba(148,163,184,0.1); margin: 24px 0; }
+  .stat { background: #111827; padding: 16px 20px; position: relative; }
+  .stat-ref { position: absolute; top: 6px; right: 8px; font-size: 9px; color: rgba(148,163,184,0.2); letter-spacing: 0.08em; }
+  .stat-val { font-size: 28px; color: #e2e8f0; line-height: 1; margin-bottom: 4px; }
+  .stat-label { font-size: 10px; color: rgba(148,163,184,0.45); letter-spacing: 0.08em; text-transform: uppercase; }
+  .section-head { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(148,163,184,0.3); margin-bottom: 12px; display: flex; align-items: center; gap: 12px; }
+  .section-head::after { content: ''; flex: 1; height: 1px; background: rgba(148,163,184,0.1); }
+  .two-col { display: grid; grid-template-columns: 1.3fr 0.7fr; gap: 16px; margin-bottom: 24px; }
+  .panel { border: 1px solid rgba(148,163,184,0.12); }
+  .panel-head { padding: 8px 16px; border-bottom: 1px solid rgba(148,163,184,0.1); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(148,163,184,0.3); display: flex; justify-content: space-between; }
+  .panel-body { padding: 14px 16px; }
+  .cat-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .cat-name { font-size: 11px; color: #94a3b8; width: 140px; flex-shrink: 0; }
+  .cat-bar-bg { flex: 1; height: 2px; background: rgba(148,163,184,0.08); }
+  .cat-bar { height: 2px; background: rgba(148,163,184,0.4); }
+  .cat-val { font-size: 10px; color: rgba(148,163,184,0.4); width: 32px; text-align: right; flex-shrink: 0; }
+  .recent-list { list-style: none; }
+  .recent-item { padding: 8px 0; border-bottom: 1px solid rgba(148,163,184,0.07); font-size: 11px; }
+  .recent-item:last-child { border-bottom: none; }
+  .recent-title { color: #cbd5e1; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .recent-meta { color: rgba(148,163,184,0.35); font-size: 10px; }
+  .query-section { border: 1px solid rgba(148,163,184,0.15); margin-bottom: 40px; }
+  .query-head { padding: 8px 16px; border-bottom: 1px solid rgba(148,163,184,0.1); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(148,163,184,0.3); }
+  .query-inner { padding: 20px 16px; }
+  .query-input-row { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; }
+  .query-prefix { font-size: 14px; color: rgba(148,163,184,0.3); flex-shrink: 0; }
+  .query-input { flex: 1; background: transparent; border: none; border-bottom: 1px solid rgba(148,163,184,0.25); color: #e2e8f0; font-family: 'Courier New', monospace; font-size: 13px; padding: 6px 0; outline: none; }
+  .query-input::placeholder { color: rgba(148,163,184,0.25); }
+  .query-btn { background: rgba(148,163,184,0.1); border: 1px solid rgba(148,163,184,0.2); color: #94a3b8; font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; padding: 8px 16px; cursor: pointer; flex-shrink: 0; }
+  .query-btn:hover { background: rgba(148,163,184,0.18); }
+  .query-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .suggestions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+  .sug { font-size: 10px; border: 1px solid rgba(148,163,184,0.12); color: rgba(148,163,184,0.4); padding: 4px 10px; cursor: pointer; letter-spacing: 0.03em; }
+  .sug:hover { border-color: rgba(148,163,184,0.3); color: #94a3b8; }
+  .answer-area { border-top: 1px solid rgba(148,163,184,0.1); padding-top: 16px; display: none; }
+  .answer-area.visible { display: block; }
+  .answer-query { font-size: 10px; color: rgba(148,163,184,0.3); margin-bottom: 10px; letter-spacing: 0.04em; }
+  .answer-text { font-size: 13px; color: #94a3b8; line-height: 1.75; font-family: Georgia, serif; white-space: pre-wrap; }
+  .answer-cite { font-size: 10px; color: rgba(148,163,184,0.25); margin-top: 12px; font-family: 'Courier New', monospace; letter-spacing: 0.04em; }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+  .blink { animation: blink 1s infinite; }
+  footer { border-top: 1px solid rgba(148,163,184,0.1); padding: 12px 0; display: flex; justify-content: space-between; font-size: 9px; color: rgba(148,163,184,0.2); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 20px; }
+  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } .two-col { grid-template-columns: 1fr; } h1 { font-size: 15px; } }
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="container">
+  <header>
+    <div class="inner">
+      <div>
+        <div class="logo">Drawing No. NZ-JMK-001 · Rev A</div>
+        <h1>NZ Job Market Intelligence</h1>
+      </div>
+      <div class="meta" id="meta">Loading...<br>Trade Me + Seek NZ</div>
+    </div>
+  </header>
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY,
-  { realtime: { transport: ws } }
-);
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const APIFY_TOKEN = process.env.APIFY_API_KEY;
-const ACTOR_ID = "websift~seek-job-scraper";
+  <div style="padding-top:24px">
+    <div class="section-head">Section 01 — Summary statistics</div>
+    <div class="stats">
+      <div class="stat"><div class="stat-ref">S-01</div><div class="stat-val" id="total-count">—</div><div class="stat-label">Total listings</div></div>
+      <div class="stat"><div class="stat-ref">S-02</div><div class="stat-val" id="category-count">—</div><div class="stat-label">Categories</div></div>
+      <div class="stat"><div class="stat-ref">S-03</div><div class="stat-val" id="salary-pct">—</div><div class="stat-label">Salary disclosed</div></div>
+      <div class="stat"><div class="stat-ref">S-04</div><div class="stat-val" id="top-region">—</div><div class="stat-label">Top region</div></div>
+    </div>
 
-const SEEK_CATEGORIES = [
-  { url: "https://www.seek.co.nz/information-technology-jobs/in-Auckland", label: "IT" },
-  { url: "https://www.seek.co.nz/healthcare-medical-jobs/in-Auckland", label: "Healthcare" },
-  { url: "https://www.seek.co.nz/trades-services-jobs/in-Auckland", label: "Trades & Services" },
-  { url: "https://www.seek.co.nz/engineering-jobs/in-Auckland", label: "Engineering" },
-  { url: "https://www.seek.co.nz/accounting-jobs/in-Auckland", label: "Accounting" },
-  { url: "https://www.seek.co.nz/construction-jobs/in-Auckland", label: "Construction" },
-  { url: "https://www.seek.co.nz/hospitality-tourism-jobs/in-Auckland", label: "Hospitality" },
-  { url: "https://www.seek.co.nz/sales-jobs/in-Auckland", label: "Sales" },
-  { url: "https://www.seek.co.nz/education-training-jobs/in-Auckland", label: "Education" },
-];
+    <div class="section-head">Section 02 — Distribution</div>
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-head"><span>Listings by category</span><span>Detail A</span></div>
+        <div class="panel-body" id="category-chart"><div style="color:rgba(148,163,184,0.3);font-size:11px">Loading...</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><span>Recent listings</span><span>Detail B</span></div>
+        <div class="panel-body"><ul class="recent-list" id="recent-list"><li style="color:rgba(148,163,184,0.3);font-size:11px">Loading...</li></ul></div>
+      </div>
+    </div>
 
-async function sleep(ms) {
-  return new Promise((r) => setTimeout(r, ms));
+    <div class="section-head">Section 03 — Query interface</div>
+    <div class="query-section">
+      <div class="query-head">Plain english market query — RAG powered</div>
+      <div class="query-inner">
+        <div class="query-input-row">
+          <span class="query-prefix">›</span>
+          <input class="query-input" id="query-input" type="text" placeholder="Ask anything about the NZ job market..." />
+          <button class="query-btn" id="query-btn" onclick="runQuery()">Execute</button>
+        </div>
+        <div class="suggestions">
+          <span class="sug" onclick="setQuery(this)">What skills do IT employers want most?</span>
+          <span class="sug" onclick="setQuery(this)">Average salary for nurses in NZ?</span>
+          <span class="sug" onclick="setQuery(this)">Which companies are hiring the most?</span>
+          <span class="sug" onclick="setQuery(this)">Remote work roles available?</span>
+          <span class="sug" onclick="setQuery(this)">Entry level jobs in Auckland?</span>
+          <span class="sug" onclick="setQuery(this)">What does construction pay?</span>
+        </div>
+        <div class="answer-area" id="answer-area">
+          <div class="answer-query" id="answer-query"></div>
+          <div class="answer-text" id="answer-text"></div>
+          <div class="answer-cite" id="answer-cite"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <span>NZ Job Market Intelligence</span>
+    <span>Built by Nancy Qin · 2026</span>
+    <span>Sheet 1 of 1</span>
+  </footer>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://gbgwxstirnomhthscjei.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdiZ3d4c3Rpcm5vbWh0aHNjamVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzNzY1MjQsImV4cCI6MjA5Nzk1MjUyNH0.JvycUrZHGUq46pfzdWPYWgSlOmyDTpmxPBjyzTtlhD0';
+
+async function db(path) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+  });
+  return res.json();
 }
 
-async function runActor(category) {
-  console.log(`\nScraping: ${category.label}`);
-
-  const runRes = await fetch(
-    `https://api.apify.com/v2/acts/${ACTOR_ID}/runs?token=${APIFY_TOKEN}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        searchUrl: category.url,
-        maxResults: 200,
-      }),
-    }
-  );
-
-  const runData = await runRes.json();
-  const runId = runData?.data?.id;
-  if (!runId) throw new Error(`Failed to start: ${JSON.stringify(runData)}`);
-  console.log(`  Run ID: ${runId}`);
-
-  for (let i = 0; i < 120; i++) {
-    await sleep(10000);
-    const statusRes = await fetch(
-      `https://api.apify.com/v2/actor-runs/${runId}?token=${APIFY_TOKEN}`
-    );
-    const statusData = await statusRes.json();
-    const status = statusData?.data?.status;
-    console.log(`  Status: ${status}`);
-    if (status === "SUCCEEDED") break;
-    if (status === "FAILED" || status === "ABORTED") throw new Error(`Actor ${status}`);
+async function dbAll(table, select) {
+  const pageSize = 1000;
+  let all = [];
+  let offset = 0;
+  while (true) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=${select}&limit=${pageSize}&offset=${offset}`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    const page = await res.json();
+    if (!page?.length) break;
+    all = all.concat(page);
+    if (page.length < pageSize) break;
+    offset += pageSize;
   }
-
-  const runDetailsRes = await fetch(
-    `https://api.apify.com/v2/actor-runs/${runId}?token=${APIFY_TOKEN}`
-  );
-  const runDetails = await runDetailsRes.json();
-  const datasetId = runDetails?.data?.defaultDatasetId;
-
-  const resultsRes = await fetch(
-    `https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY_TOKEN}&format=json&limit=1000`
-  );
-  const items = await resultsRes.json();
-  const listings = Array.isArray(items) ? items : [];
-  console.log(`  Got ${listings.length} listings`);
-  return listings.map((item) => ({ ...item, _category: category.label }));
+  return all;
 }
 
-async function embedAndStore(listings) {
-  console.log(`\nEmbedding ${listings.length} listings...`);
-  const BATCH_SIZE = 20;
-  let stored = 0;
-
-  for (let i = 0; i < listings.length; i += BATCH_SIZE) {
-    const batch = listings.slice(i, i + BATCH_SIZE);
-
-    const texts = batch.map((job) => [
-      `Job Title: ${job.title || ""}`,
-      `Company: ${job.advertiser?.name || ""}`,
-      `Location: ${job.joblocationInfo?.displayLocation || ""}`,
-      `Category: ${job._category}`,
-      `Sub-category: ${job.classificationInfo?.subClassification || ""}`,
-      `Salary: ${job.salary || "Not specified"}`,
-      `Work type: ${job.workTypes || ""}`,
-      `Work arrangement: ${job.workArrangements || ""}`,
-      `Description: ${(job.content?.bulletPoints || []).join(". ")}`,
-      `Details: ${(job.content?.sections || []).slice(0, 8).join(". ")}`,
-    ].join("\n"));
-
-    try {
-      const embeddingResponse = await openai.embeddings.create({
-        model: "text-embedding-3-small",
-        input: texts,
-      });
-
-      const rows = batch.map((job, idx) => ({
-        title: job.title || null,
-        company: job.advertiser?.name || null,
-        location: job.joblocationInfo?.displayLocation || null,
-        salary: job.salary || null,
-        category: job._category,
-        description_snippet: (job.content?.bulletPoints || []).join(" · ") || job.content?.jobHook || null,
-        listing_date: job.listedAt || null,
-        seek_url: job.jobLink || null,
-        scraped_at: new Date().toISOString(),
-        embedding: embeddingResponse.data[idx].embedding,
-      }));
-
-      const { error } = await supabase.from("job_listings").upsert(rows, {
-        onConflict: "seek_url",
-        ignoreDuplicates: true,
-      });
-
-      if (error) {
-        console.error("  Supabase error:", error.message);
-      } else {
-        stored += rows.length;
-        console.log(`  Stored ${stored}/${listings.length}`);
-      }
-    } catch (err) {
-      console.error(`  Embedding error at batch ${i}:`, err.message);
+async function loadStats() {
+  const data = await dbAll('job_listings', 'category,salary,location,scraped_at');
+  if (!data?.length) return;
+  document.getElementById('total-count').textContent = data.length.toLocaleString();
+  const cats = {}, regions = {};
+  let withSalary = 0;
+  data.forEach(j => {
+    if (j.category) cats[j.category] = (cats[j.category] || 0) + 1;
+    if (j.salary) withSalary++;
+    if (j.location) {
+      const r = j.location.split(',').pop()?.trim() || j.location;
+      regions[r] = (regions[r] || 0) + 1;
     }
-
-    await sleep(200);
-  }
-
-  return stored;
+  });
+  document.getElementById('category-count').textContent = Object.keys(cats).length;
+  document.getElementById('salary-pct').textContent = Math.round(withSalary / data.length * 100) + '%';
+  const top = Object.entries(regions).sort((a,b) => b[1]-a[1])[0];
+  document.getElementById('top-region').textContent = top ? top[0].split(' ')[0] : '—';
+  const date = data[0]?.scraped_at ? new Date(data[0].scraped_at).toLocaleDateString('en-NZ') : '—';
+  document.getElementById('meta').innerHTML = `${data.length.toLocaleString()} listings indexed<br>Trade Me + Seek NZ<br>${date}`;
+  const sorted = Object.entries(cats).sort((a,b) => b[1]-a[1]).slice(0,8);
+  const max = sorted[0][1];
+  document.getElementById('category-chart').innerHTML = sorted.map(([n,c]) => `
+    <div class="cat-row">
+      <span class="cat-name">${n}</span>
+      <div class="cat-bar-bg"><div class="cat-bar" style="width:${Math.round(c/max*100)}%"></div></div>
+      <span class="cat-val">${c}</span>
+    </div>`).join('');
 }
 
-export async function runApifyScrape() {
-  console.log("\n=== Apify Seek scrape started ===");
-  const allListings = [];
-
-  for (const category of SEEK_CATEGORIES) {
-    try {
-      const listings = await runActor(category);
-      allListings.push(...listings);
-    } catch (err) {
-      console.error(`Failed for ${category.label}:`, err.message);
-    }
-    await sleep(2000);
-  }
-
-  console.log(`\nTotal Seek listings: ${allListings.length}`);
-  const stored = await embedAndStore(allListings);
-  console.log(`\n=== Apify done. Stored: ${stored} ===`);
-  return stored;
+async function loadRecent() {
+  const data = await db('job_listings?select=title,company,category&order=scraped_at.desc&limit=8');
+  if (!data?.length) return;
+  document.getElementById('recent-list').innerHTML = data.map(j => `
+    <li class="recent-item">
+      <div class="recent-title">${j.title || '—'}</div>
+      <div class="recent-meta">${j.company || ''} · ${j.category || ''}</div>
+    </li>`).join('');
 }
+
+function setQuery(el) { document.getElementById('query-input').value = el.textContent; }
+
+async function runQuery() {
+  const query = document.getElementById('query-input').value.trim();
+  if (!query) return;
+  const btn = document.getElementById('query-btn');
+  const area = document.getElementById('answer-area');
+  const text = document.getElementById('answer-text');
+  btn.disabled = true; btn.textContent = 'Running...';
+  area.classList.add('visible');
+  document.getElementById('answer-query').textContent = `→ "${query}"`;
+  text.innerHTML = '<span class="blink">█</span>';
+  document.getElementById('answer-cite').textContent = '';
+
+  try {
+    // Embed via serverless function
+    const embedRes = await fetch('/api/embed', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: query }),
+    });
+    const { embedding } = await embedRes.json();
+
+    // Vector search in Supabase
+    const searchRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/match_jobs`, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query_embedding: embedding, match_count: 25 }),
+    });
+    const results = await searchRes.json();
+    if (!results?.length) { text.textContent = 'No relevant listings found.'; return; }
+
+    const context = results.map(r =>
+      `Title: ${r.title}\nCompany: ${r.company||'Unknown'}\nLocation: ${r.location||'Unknown'}\nCategory: ${r.category}\nSalary: ${r.salary||'Not specified'}\nDescription: ${r.description_snippet||''}`
+    ).join('\n\n---\n\n');
+
+    // Claude via serverless function
+    const claudeRes = await fetch('/api/query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, context }),
+    });
+    const { answer } = await claudeRes.json();
+    text.textContent = answer || 'No answer generated.';
+    document.getElementById('answer-cite').textContent = `Source: ${results.length} listings · Trade Me + Seek NZ · ${new Date().toLocaleDateString('en-NZ')}`;
+  } catch(err) {
+    text.textContent = `Error: ${err.message}`;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Execute';
+  }
+}
+
+document.getElementById('query-input').addEventListener('keydown', e => { if (e.key === 'Enter') runQuery(); });
+loadStats();
+loadRecent();
+</script>
+</body>
+</html>
