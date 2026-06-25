@@ -10,28 +10,35 @@ export default async function handler(req, res) {
   }
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
         'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: 'gpt-4o-mini',
         max_tokens: 1000,
-        system: 'You are a New Zealand job market analyst. Answer questions based only on the job listings provided. Be specific, cite numbers and examples, keep answers concise and useful.',
-        messages: [{ role: 'user', content: `Job listings:\n\n${context}\n\nQuestion: ${query}` }],
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a New Zealand job market analyst. Answer questions based only on the job listings provided. Be specific, cite numbers and examples, keep answers concise and useful.',
+          },
+          {
+            role: 'user',
+            content: `Job listings:\n\n${context}\n\nQuestion: ${query}`,
+          },
+        ],
       }),
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      return res.status(response.status).json({ error: data.error?.message || 'Claude API error' });
+      return res.status(response.status).json({ error: data.error?.message || 'OpenAI error' });
     }
 
-    return res.status(200).json({ answer: data.content?.[0]?.text || 'No answer generated.' });
+    return res.status(200).json({ answer: data.choices?.[0]?.message?.content || 'No answer generated.' });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
