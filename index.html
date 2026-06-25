@@ -487,8 +487,11 @@ async function dbAll(table, select) {
 
 function initMap() {
   map = L.map('map', { zoomControl: true }).setView([-36.88, 174.76], 11);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>'
+  L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/light-v11/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoic3dpenp5c2FkIiwiYSI6ImNtcXUzdDN0MjBxMTIydG9jZTRsMnJjbmMifQ.JQt4sRzACHdWmWTal1i6cw', {
+    attribution: '© <a href="https://mapbox.com">Mapbox</a> © <a href="https://openstreetmap.org">OpenStreetMap</a>',
+    tileSize: 512,
+    zoomOffset: -1,
+    maxZoom: 18,
   }).addTo(map);
 }
 
