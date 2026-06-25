@@ -485,9 +485,11 @@ async function dbAll(table, select) {
   return all;
 }
 
-function initMap() {
+async function initMap() {
   map = L.map('map', { zoomControl: true }).setView([-36.88, 174.76], 11);
-  L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/light-v11/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoic3dpenp5c2FkIiwiYSI6ImNtcXUzdDN0MjBxMTIydG9jZTRsMnJjbmMifQ.JQt4sRzACHdWmWTal1i6cw', {
+  const tokenRes = await fetch('/api/map-token');
+  const { token } = await tokenRes.json();
+  L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/light-v11/tiles/{z}/{x}/{y}?access_token=${token}`, {
     attribution: '© <a href="https://mapbox.com">Mapbox</a> © <a href="https://openstreetmap.org">OpenStreetMap</a>',
     tileSize: 512,
     zoomOffset: -1,
@@ -675,7 +677,7 @@ async function runQuery() {
 document.getElementById('query-input').addEventListener('keydown', e => { if (e.key === 'Enter') runQuery(); });
 
 async function init() {
-  initMap();
+  await initMap();
   allListings = await dbAll('job_listings', 'title,company,location,salary,category,seek_url');
   filteredListings = allListings;
 
