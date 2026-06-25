@@ -3,144 +3,475 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NZ Job Market Intelligence</title>
+<title>job-marketGPT — Auckland</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #111827; color: #94a3b8; font-family: 'Courier New', monospace; min-height: 100vh; }
-  .grid-bg { position: fixed; inset: 0; background-image: linear-gradient(rgba(148,163,184,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,0.04) 1px, transparent 1px); background-size: 32px 32px; pointer-events: none; z-index: 0; }
-  .container { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 24px; }
-  header { border-bottom: 1px solid rgba(148,163,184,0.15); padding: 20px 0; }
-  header .inner { display: flex; align-items: flex-end; justify-content: space-between; }
-  .logo { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(148,163,184,0.4); margin-bottom: 4px; }
-  h1 { font-size: 20px; color: #e2e8f0; font-weight: normal; letter-spacing: 0.05em; text-transform: uppercase; }
-  .meta { text-align: right; font-size: 10px; color: rgba(148,163,184,0.35); line-height: 1.8; letter-spacing: 0.05em; }
-  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: rgba(148,163,184,0.1); border: 1px solid rgba(148,163,184,0.1); margin: 24px 0; }
-  .stat { background: #111827; padding: 16px 20px; position: relative; }
-  .stat-ref { position: absolute; top: 6px; right: 8px; font-size: 9px; color: rgba(148,163,184,0.2); letter-spacing: 0.08em; }
-  .stat-val { font-size: 28px; color: #e2e8f0; line-height: 1; margin-bottom: 4px; }
-  .stat-label { font-size: 10px; color: rgba(148,163,184,0.45); letter-spacing: 0.08em; text-transform: uppercase; }
-  .section-head { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(148,163,184,0.3); margin-bottom: 12px; display: flex; align-items: center; gap: 12px; }
-  .section-head::after { content: ''; flex: 1; height: 1px; background: rgba(148,163,184,0.1); }
-  .two-col { display: grid; grid-template-columns: 1.3fr 0.7fr; gap: 16px; margin-bottom: 24px; }
-  .panel { border: 1px solid rgba(148,163,184,0.12); }
-  .panel-head { padding: 8px 16px; border-bottom: 1px solid rgba(148,163,184,0.1); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(148,163,184,0.3); display: flex; justify-content: space-between; }
-  .panel-body { padding: 14px 16px; }
-  .cat-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-  .cat-name { font-size: 11px; color: #94a3b8; width: 140px; flex-shrink: 0; }
-  .cat-bar-bg { flex: 1; height: 2px; background: rgba(148,163,184,0.08); }
-  .cat-bar { height: 2px; background: rgba(148,163,184,0.4); }
-  .cat-val { font-size: 10px; color: rgba(148,163,184,0.4); width: 32px; text-align: right; flex-shrink: 0; }
-  .recent-list { list-style: none; }
-  .recent-item { padding: 8px 0; border-bottom: 1px solid rgba(148,163,184,0.07); font-size: 11px; }
-  .recent-item:last-child { border-bottom: none; }
-  .recent-title { color: #cbd5e1; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .recent-meta { color: rgba(148,163,184,0.35); font-size: 10px; }
-  .query-section { border: 1px solid rgba(148,163,184,0.15); margin-bottom: 40px; }
-  .query-head { padding: 8px 16px; border-bottom: 1px solid rgba(148,163,184,0.1); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(148,163,184,0.3); }
-  .query-inner { padding: 20px 16px; }
-  .query-input-row { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; }
-  .query-prefix { font-size: 14px; color: rgba(148,163,184,0.3); flex-shrink: 0; }
-  .query-input { flex: 1; background: transparent; border: none; border-bottom: 1px solid rgba(148,163,184,0.25); color: #e2e8f0; font-family: 'Courier New', monospace; font-size: 13px; padding: 6px 0; outline: none; }
-  .query-input::placeholder { color: rgba(148,163,184,0.25); }
-  .query-btn { background: rgba(148,163,184,0.1); border: 1px solid rgba(148,163,184,0.2); color: #94a3b8; font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; padding: 8px 16px; cursor: pointer; flex-shrink: 0; }
-  .query-btn:hover { background: rgba(148,163,184,0.18); }
-  .query-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-  .suggestions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
-  .sug { font-size: 10px; border: 1px solid rgba(148,163,184,0.12); color: rgba(148,163,184,0.4); padding: 4px 10px; cursor: pointer; letter-spacing: 0.03em; }
-  .sug:hover { border-color: rgba(148,163,184,0.3); color: #94a3b8; }
-  .answer-area { border-top: 1px solid rgba(148,163,184,0.1); padding-top: 16px; display: none; }
-  .answer-area.visible { display: block; }
-  .answer-query { font-size: 10px; color: rgba(148,163,184,0.3); margin-bottom: 10px; letter-spacing: 0.04em; }
-  .answer-text { font-size: 13px; color: #94a3b8; line-height: 1.75; font-family: Georgia, serif; white-space: pre-wrap; }
-  .answer-cite { font-size: 10px; color: rgba(148,163,184,0.25); margin-top: 12px; font-family: 'Courier New', monospace; letter-spacing: 0.04em; }
-  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+  :root {
+    --bg: #f8f7f4;
+    --panel: #ffffff;
+    --border: #e8e5df;
+    --border-strong: #d0ccc4;
+    --text-primary: #1a1816;
+    --text-secondary: #6b6560;
+    --text-muted: #a8a49e;
+    --accent: #2563eb;
+    --accent-bg: #eff6ff;
+    --accent-text: #1d4ed8;
+    --green: #16a34a;
+    --green-bg: #f0fdf4;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --mono: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+  }
+
+  html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text-primary); font-family: var(--sans); }
+
+  .app { display: flex; height: 100vh; }
+
+  /* LEFT PANEL */
+  .left {
+    width: 400px;
+    flex-shrink: 0;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Header */
+  .header {
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2px;
+  }
+
+  .wordmark {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+  }
+
+  .wordmark span { color: var(--accent); }
+
+  .live-badge {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--green);
+    font-weight: 500;
+    background: var(--green-bg);
+    padding: 3px 8px;
+    border-radius: 20px;
+  }
+
+  .live-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  .header-sub { font-size: 12px; color: var(--text-muted); }
+
+  /* Stats */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .stat {
+    padding: 14px 16px;
+    border-right: 1px solid var(--border);
+  }
+
+  .stat:last-child { border-right: none; }
+  .stat-val { font-size: 20px; font-weight: 600; color: var(--text-primary); line-height: 1; margin-bottom: 3px; letter-spacing: -0.02em; }
+  .stat-label { font-size: 11px; color: var(--text-muted); }
+
+  /* Category filters */
+  .filter-section {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .filter-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 8px;
+  }
+
+  .filter-chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .chip {
+    font-size: 12px;
+    padding: 5px 11px;
+    border: 1px solid var(--border-strong);
+    border-radius: 20px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    background: transparent;
+    font-family: var(--sans);
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .chip.active { background: var(--accent-bg); border-color: var(--accent); color: var(--accent-text); font-weight: 500; }
+
+  /* Query */
+  .query-section {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .query-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg);
+    border: 1.5px solid var(--border-strong);
+    border-radius: 10px;
+    padding: 8px 12px;
+    margin-bottom: 10px;
+    transition: border-color 0.15s;
+  }
+
+  .query-box:focus-within { border-color: var(--accent); }
+
+  .query-icon { color: var(--text-muted); font-size: 15px; flex-shrink: 0; }
+
+  .query-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-family: var(--sans);
+    font-size: 13px;
+    outline: none;
+  }
+
+  .query-input::placeholder { color: var(--text-muted); }
+
+  .query-btn {
+    background: var(--accent);
+    border: none;
+    color: #fff;
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 7px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: opacity 0.15s;
+  }
+
+  .query-btn:hover { opacity: 0.88; }
+  .query-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .suggestions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .sug {
+    font-size: 11px;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 4px 10px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: var(--panel);
+  }
+
+  .sug:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Scroll */
+  .scroll-area { flex: 1; overflow-y: auto; }
+
+  /* Answer */
+  .answer-box {
+    margin: 12px 16px;
+    padding: 14px 16px;
+    background: var(--accent-bg);
+    border: 1px solid #bfdbfe;
+    border-radius: 10px;
+    display: none;
+  }
+
+  .answer-box.visible { display: block; }
+  .answer-label { font-size: 11px; font-weight: 600; color: var(--accent-text); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+  .answer-text { font-size: 13px; color: #1e3a6e; line-height: 1.7; white-space: pre-wrap; }
+  .answer-cite { margin-top: 10px; font-size: 11px; color: #6b9be8; }
+
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
   .blink { animation: blink 1s infinite; }
-  footer { border-top: 1px solid rgba(148,163,184,0.1); padding: 12px 0; display: flex; justify-content: space-between; font-size: 9px; color: rgba(148,163,184,0.2); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 20px; }
-  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } .two-col { grid-template-columns: 1fr; } h1 { font-size: 15px; } }
+
+  /* Listings */
+  .listings-head {
+    padding: 12px 16px 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .clear-filter {
+    font-size: 11px;
+    color: var(--accent);
+    cursor: pointer;
+    font-weight: 500;
+    display: none;
+  }
+
+  .clear-filter.visible { display: block; }
+
+  .listing-card {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+
+  .listing-card:hover { background: var(--bg); }
+
+  .listing-title { font-size: 13px; font-weight: 500; color: var(--text-primary); margin-bottom: 3px; line-height: 1.35; }
+  .listing-company { font-size: 12px; color: var(--text-secondary); margin-bottom: 7px; }
+
+  .listing-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .tag {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+
+  .tag-location { background: #f1f5f9; color: #475569; }
+  .tag-salary { background: var(--green-bg); color: #166534; }
+  .tag-cat { background: var(--bg); color: var(--text-muted); border: 1px solid var(--border); }
+
+  /* RIGHT */
+  .right { flex: 1; position: relative; }
+  #map { width: 100%; height: 100%; }
+
+  /* Map tooltip */
+  .map-tooltip {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 1000;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-family: var(--sans);
+    pointer-events: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    min-width: 160px;
+  }
+
+  .tooltip-suburb { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+  .tooltip-count { font-size: 12px; color: var(--text-secondary); }
+  .tooltip-cats { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+  .tooltip-cat-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-secondary); }
+  .tooltip-cat-bar { height: 3px; border-radius: 2px; background: var(--accent); }
+  .tooltip-cat-label { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tooltip-cat-val { color: var(--text-muted); flex-shrink: 0; }
+
+  .map-legend {
+    position: absolute;
+    bottom: 24px;
+    right: 16px;
+    z-index: 1000;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  .legend-title { font-weight: 600; font-size: 11px; color: var(--text-primary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .legend-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+  .legend-circle { border-radius: 50%; background: rgba(37,99,235,0.2); border: 2px solid rgba(37,99,235,0.6); flex-shrink: 0; }
+
+  /* Leaflet overrides for light map */
+  .leaflet-control-zoom a { border-radius: 6px !important; }
+  .leaflet-control-attribution { font-size: 10px !important; }
+
+  @media (max-width: 768px) {
+    .app { flex-direction: column; }
+    .left { width: 100%; height: 60vh; overflow-y: auto; }
+    .right { height: 40vh; }
+    html, body { overflow: auto; }
+  }
 </style>
 </head>
 <body>
-<div class="grid-bg"></div>
-<div class="container">
-  <header>
-    <div class="inner">
-      <div>
-        <div class="logo">Drawing No. NZ-JMK-001 · Rev A</div>
-        <h1>NZ Job Market Intelligence</h1>
-      </div>
-      <div class="meta" id="meta">Loading...<br>Trade Me + Seek NZ</div>
-    </div>
-  </header>
+<div class="app">
 
-  <div style="padding-top:24px">
-    <div class="section-head">Section 01 — Summary statistics</div>
+  <div class="left">
+    <div class="header">
+      <div class="header-row">
+        <div class="wordmark">job-market<span>GPT</span></div>
+        <div class="live-badge"><div class="live-dot"></div>Live data</div>
+      </div>
+      <div class="header-sub">Auckland · Trade Me + Seek NZ</div>
+    </div>
+
     <div class="stats">
-      <div class="stat"><div class="stat-ref">S-01</div><div class="stat-val" id="total-count">—</div><div class="stat-label">Total listings</div></div>
-      <div class="stat"><div class="stat-ref">S-02</div><div class="stat-val" id="category-count">—</div><div class="stat-label">Categories</div></div>
-      <div class="stat"><div class="stat-ref">S-03</div><div class="stat-val" id="salary-pct">—</div><div class="stat-label">Salary disclosed</div></div>
-      <div class="stat"><div class="stat-ref">S-04</div><div class="stat-val" id="top-region">—</div><div class="stat-label">Top region</div></div>
+      <div class="stat"><div class="stat-val" id="stat-total">—</div><div class="stat-label">Listings</div></div>
+      <div class="stat"><div class="stat-val" id="stat-salary">—</div><div class="stat-label">Show salary</div></div>
+      <div class="stat"><div class="stat-val" id="stat-suburbs">—</div><div class="stat-label">Suburbs</div></div>
     </div>
 
-    <div class="section-head">Section 02 — Distribution</div>
-    <div class="two-col">
-      <div class="panel">
-        <div class="panel-head"><span>Listings by category</span><span>Detail A</span></div>
-        <div class="panel-body" id="category-chart"><div style="color:rgba(148,163,184,0.3);font-size:11px">Loading...</div></div>
-      </div>
-      <div class="panel">
-        <div class="panel-head"><span>Recent listings</span><span>Detail B</span></div>
-        <div class="panel-body"><ul class="recent-list" id="recent-list"><li style="color:rgba(148,163,184,0.3);font-size:11px">Loading...</li></ul></div>
+    <div class="filter-section">
+      <div class="filter-label">Filter by category</div>
+      <div class="filter-chips" id="filter-chips">
+        <button class="chip active" data-cat="all" onclick="filterCat(this)">All</button>
       </div>
     </div>
 
-    <div class="section-head">Section 03 — Query interface</div>
     <div class="query-section">
-      <div class="query-head">Plain english market query — RAG powered</div>
-      <div class="query-inner">
-        <div class="query-input-row">
-          <span class="query-prefix">›</span>
-          <input class="query-input" id="query-input" type="text" placeholder="Ask anything about the NZ job market..." />
-          <button class="query-btn" id="query-btn" onclick="runQuery()">Execute</button>
-        </div>
-        <div class="suggestions">
-          <span class="sug" onclick="setQuery(this)">What skills do IT employers want most?</span>
-          <span class="sug" onclick="setQuery(this)">Average salary for nurses in NZ?</span>
-          <span class="sug" onclick="setQuery(this)">Which companies are hiring the most?</span>
-          <span class="sug" onclick="setQuery(this)">Remote work roles available?</span>
-          <span class="sug" onclick="setQuery(this)">Entry level jobs in Auckland?</span>
-          <span class="sug" onclick="setQuery(this)">What does construction pay?</span>
-        </div>
-        <div class="answer-area" id="answer-area">
-          <div class="answer-query" id="answer-query"></div>
-          <div class="answer-text" id="answer-text"></div>
-          <div class="answer-cite" id="answer-cite"></div>
-        </div>
+      <div class="query-box">
+        <span class="query-icon">🔍</span>
+        <input class="query-input" id="query-input" type="text" placeholder="Ask about Auckland jobs..." />
+        <button class="query-btn" id="query-btn" onclick="runQuery()">Ask</button>
       </div>
+      <div class="suggestions">
+        <span class="sug" onclick="setQ(this)">Top skills in IT?</span>
+        <span class="sug" onclick="setQ(this)">Remote roles?</span>
+        <span class="sug" onclick="setQ(this)">Best paying jobs?</span>
+        <span class="sug" onclick="setQ(this)">Entry level roles?</span>
+        <span class="sug" onclick="setQ(this)">Most hiring companies?</span>
+      </div>
+    </div>
+
+    <div class="scroll-area">
+      <div class="answer-box" id="answer-box">
+        <div class="answer-label">Analysis</div>
+        <div class="answer-text" id="answer-text"></div>
+        <div class="answer-cite" id="answer-cite"></div>
+      </div>
+
+      <div class="listings-head">
+        <span id="listings-label">Recent listings</span>
+        <span class="clear-filter" id="clear-filter" onclick="clearFilter()">Clear filter ×</span>
+      </div>
+      <div id="listings"></div>
     </div>
   </div>
 
-  <footer>
-    <span>NZ Job Market Intelligence</span>
-    <span>Built by Nancy Qin · 2026</span>
-    <span>Sheet 1 of 1</span>
-  </footer>
+  <div class="right">
+    <div id="map"></div>
+
+    <div class="map-tooltip" id="map-tooltip">
+      <div class="tooltip-suburb" id="tt-suburb">Auckland</div>
+      <div class="tooltip-count" id="tt-count">Loading listings...</div>
+      <div class="tooltip-cats" id="tt-cats"></div>
+    </div>
+
+    <div class="map-legend">
+      <div class="legend-title">Listings per suburb</div>
+      <div class="legend-row"><div class="legend-circle" style="width:10px;height:10px;"></div><span>1–10</span></div>
+      <div class="legend-row"><div class="legend-circle" style="width:16px;height:16px;"></div><span>11–30</span></div>
+      <div class="legend-row"><div class="legend-circle" style="width:22px;height:22px;"></div><span>30+</span></div>
+    </div>
+  </div>
+
 </div>
 
 <script>
 const SUPABASE_URL = 'https://gbgwxstirnomhthscjei.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdiZ3d4c3Rpcm5vbWh0aHNjamVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzNzY1MjQsImV4cCI6MjA5Nzk1MjUyNH0.JvycUrZHGUq46pfzdWPYWgSlOmyDTpmxPBjyzTtlhD0';
 
-async function db(path) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-  });
-  return res.json();
+const SUBURB_COORDS = {
+  'Auckland CBD': [-36.8485, 174.7633], 'Auckland': [-36.8485, 174.7633],
+  'Newmarket': [-36.8693, 174.7769], 'Parnell': [-36.8570, 174.7780],
+  'Grafton': [-36.8620, 174.7700], 'Ponsonby': [-36.8530, 174.7470],
+  'Grey Lynn': [-36.8630, 174.7380], 'Kingsland': [-36.8720, 174.7430],
+  'Mount Eden': [-36.8790, 174.7580], 'Epsom': [-36.8930, 174.7700],
+  'Remuera': [-36.8820, 174.7930], 'Mission Bay': [-36.8600, 174.8200],
+  'Takapuna': [-36.7890, 174.7760], 'North Shore City': [-36.7860, 174.7550],
+  'Albany': [-36.7270, 174.7010], 'Browns Bay': [-36.7190, 174.7390],
+  'Rosedale': [-36.7360, 174.7220], 'Devonport': [-36.8280, 174.8010],
+  'Belmont': [-36.8100, 174.7890], 'Orewa': [-36.5870, 174.6940],
+  'Helensville': [-36.6720, 174.4550], 'Kumeu': [-36.7730, 174.5610],
+  'Waimauku': [-36.7890, 174.5090], 'Matakana': [-36.3670, 174.7140],
+  'Dairy Flat': [-36.6670, 174.6580], 'Sandspit': [-36.4420, 174.7430],
+  'Henderson': [-36.8750, 174.6320], 'Henderson Valley': [-36.8860, 174.6090],
+  'West Harbour': [-36.8390, 174.6390], 'Massey': [-36.8520, 174.6330],
+  'New Lynn': [-36.9050, 174.6860], 'Avondale': [-36.9000, 174.7070],
+  'Waitakere City': [-36.8850, 174.6450], 'Westhaven': [-36.8440, 174.7510],
+  'Mount Albert': [-36.8870, 174.7260], 'Mount Roskill': [-36.9110, 174.7350],
+  'Onehunga': [-36.9270, 174.7860], 'Manukau': [-36.9940, 174.8760],
+  'Manurewa': [-37.0220, 174.8970], 'Papatoetoe': [-36.9830, 174.8490],
+  'Otahuhu': [-36.9490, 174.8390], 'Penrose': [-36.9230, 174.8180],
+  'East Tamaki': [-36.9680, 174.8980], 'Pakuranga': [-36.9000, 174.9150],
+  'Botany': [-36.9340, 174.9140], 'Howick': [-36.8980, 174.9330],
+  'Beachlands': [-36.8890, 175.0180], 'Pukekohe': [-37.2020, 174.9010],
+  'Patumahoe': [-37.1680, 174.8560], 'Auckland Airport': [-37.0082, 174.7850],
+  'Mangere': [-36.9820, 174.7980], 'Papakura': [-37.0640, 174.9440],
+  'Westhaven': [-36.8440, 174.7510], 'Wynyard Quarter': [-36.8440, 174.7510],
+};
+
+const CAT_COLORS = {
+  'IT': '#2563eb', 'Healthcare': '#16a34a', 'Trades & Services': '#d97706',
+  'Engineering': '#7c3aed', 'Accounting': '#0891b2', 'Construction': '#dc2626',
+  'Hospitality': '#db2777', 'Sales': '#ea580c', 'Education': '#65a30d',
+  'Manufacturing, Transport & Logistics': '#475569',
+};
+
+let allListings = [], filteredListings = [], activeCategory = 'all';
+let map, heatLayer, circleMarkers = [];
+
+function getSuburb(location) {
+  if (!location) return 'Auckland';
+  return location.split(',')[0].trim();
 }
 
 async function dbAll(table, select) {
   const pageSize = 1000;
-  let all = [];
-  let offset = 0;
+  let all = [], offset = 0;
   while (true) {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=${select}&limit=${pageSize}&offset=${offset}`, {
       headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
@@ -154,70 +485,162 @@ async function dbAll(table, select) {
   return all;
 }
 
-async function loadStats() {
-  const data = await dbAll('job_listings', 'category,salary,location,scraped_at');
-  if (!data?.length) return;
-  document.getElementById('total-count').textContent = data.length.toLocaleString();
-  const cats = {}, regions = {};
-  let withSalary = 0;
-  data.forEach(j => {
-    if (j.category) cats[j.category] = (cats[j.category] || 0) + 1;
-    if (j.salary) withSalary++;
-    if (j.location) {
-      const r = j.location.split(',').pop()?.trim() || j.location;
-      regions[r] = (regions[r] || 0) + 1;
-    }
+function initMap() {
+  map = L.map('map', { zoomControl: true }).setView([-36.88, 174.76], 11);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>'
+  }).addTo(map);
+}
+
+function buildMap(listings) {
+  // Clear old layers
+  if (heatLayer) map.removeLayer(heatLayer);
+  circleMarkers.forEach(m => map.removeLayer(m));
+  circleMarkers = [];
+
+  // Group by suburb
+  const suburbData = {};
+  listings.forEach(j => {
+    const suburb = getSuburb(j.location);
+    const coords = SUBURB_COORDS[suburb];
+    if (!coords) return;
+    if (!suburbData[suburb]) suburbData[suburb] = { coords, jobs: [], cats: {} };
+    suburbData[suburb].jobs.push(j);
+    const cat = j.category || 'Other';
+    suburbData[suburb].cats[cat] = (suburbData[suburb].cats[cat] || 0) + 1;
   });
-  document.getElementById('category-count').textContent = Object.keys(cats).length;
-  document.getElementById('salary-pct').textContent = Math.round(withSalary / data.length * 100) + '%';
-  const top = Object.entries(regions).sort((a,b) => b[1]-a[1])[0];
-  document.getElementById('top-region').textContent = top ? top[0].split(' ')[0] : '—';
-  const date = data[0]?.scraped_at ? new Date(data[0].scraped_at).toLocaleDateString('en-NZ') : '—';
-  document.getElementById('meta').innerHTML = `${data.length.toLocaleString()} listings indexed<br>Trade Me + Seek NZ<br>${date}`;
-  const sorted = Object.entries(cats).sort((a,b) => b[1]-a[1]).slice(0,8);
-  const max = sorted[0][1];
-  document.getElementById('category-chart').innerHTML = sorted.map(([n,c]) => `
-    <div class="cat-row">
-      <span class="cat-name">${n}</span>
-      <div class="cat-bar-bg"><div class="cat-bar" style="width:${Math.round(c/max*100)}%"></div></div>
-      <span class="cat-val">${c}</span>
-    </div>`).join('');
+
+  const counts = Object.values(suburbData).map(d => d.jobs.length);
+  const max = Math.max(...counts);
+
+  // Heatmap layer
+  const heatPoints = Object.values(suburbData).map(d => [
+    d.coords[0], d.coords[1], d.jobs.length / max
+  ]);
+  heatLayer = L.heatLayer(heatPoints, {
+    radius: 40, blur: 35, maxZoom: 13,
+    gradient: { 0.1: '#bfdbfe', 0.4: '#60a5fa', 0.7: '#2563eb', 1.0: '#1d4ed8' }
+  }).addTo(map);
+
+  // Circle markers on top
+  Object.entries(suburbData).forEach(([suburb, data]) => {
+    const count = data.jobs.length;
+    const size = Math.max(10, Math.min(40, 8 + (count / max) * 36));
+
+    const marker = L.circleMarker(data.coords, {
+      radius: size / 2,
+      fillColor: '#2563eb',
+      fillOpacity: 0.15,
+      color: '#2563eb',
+      weight: 2,
+      opacity: 0.7,
+    }).addTo(map);
+
+    // Count label
+    const label = L.divIcon({
+      html: `<div style="
+        font-size:${count > 99 ? 9 : 10}px;
+        font-weight:600;
+        color:#1d4ed8;
+        text-align:center;
+        line-height:${size}px;
+        width:${size}px;
+        pointer-events:none;
+        font-family:-apple-system,sans-serif;
+      ">${count}</div>`,
+      iconSize: [size, size],
+      iconAnchor: [size/2, size/2],
+      className: '',
+    });
+    L.marker(data.coords, { icon: label, interactive: false }).addTo(map);
+
+    marker.on('mouseover', () => updateTooltip(suburb, data));
+    marker.on('click', () => {
+      updateTooltip(suburb, data);
+      showListings(data.jobs, suburb);
+      document.getElementById('clear-filter').classList.add('visible');
+    });
+
+    circleMarkers.push(marker);
+  });
+
+  updateTooltip('Auckland', { jobs: listings, cats: getCats(listings) });
 }
 
-async function loadRecent() {
-  const data = await db('job_listings?select=title,company,category&order=scraped_at.desc&limit=8');
-  if (!data?.length) return;
-  document.getElementById('recent-list').innerHTML = data.map(j => `
-    <li class="recent-item">
-      <div class="recent-title">${j.title || '—'}</div>
-      <div class="recent-meta">${j.company || ''} · ${j.category || ''}</div>
-    </li>`).join('');
+function getCats(listings) {
+  const cats = {};
+  listings.forEach(j => { cats[j.category || 'Other'] = (cats[j.category || 'Other'] || 0) + 1; });
+  return cats;
 }
 
-function setQuery(el) { document.getElementById('query-input').value = el.textContent; }
+function updateTooltip(suburb, data) {
+  document.getElementById('tt-suburb').textContent = suburb;
+  document.getElementById('tt-count').textContent = `${data.jobs.length} listing${data.jobs.length !== 1 ? 's' : ''}`;
+
+  const sorted = Object.entries(data.cats).sort((a,b) => b[1]-a[1]).slice(0, 4);
+  const topCount = sorted[0]?.[1] || 1;
+  document.getElementById('tt-cats').innerHTML = sorted.map(([cat, count]) => `
+    <div class="tooltip-cat-row">
+      <span class="tooltip-cat-label">${cat}</span>
+      <div class="tooltip-cat-bar" style="width:${Math.round(count/topCount*60)}px; background:${CAT_COLORS[cat]||'#6b7280'}"></div>
+      <span class="tooltip-cat-val">${count}</span>
+    </div>
+  `).join('');
+}
+
+function showListings(listings, label) {
+  document.getElementById('listings-label').textContent = label ? `${label} — ${listings.length} listings` : `${listings.length} listings`;
+  const html = listings.slice(0, 60).map(j => `
+    <div class="listing-card" onclick="${j.seek_url ? `window.open('${j.seek_url}','_blank')` : ''}">
+      <div class="listing-title">${j.title || '—'}</div>
+      ${j.company ? `<div class="listing-company">${j.company}</div>` : ''}
+      <div class="listing-tags">
+        ${j.location ? `<span class="tag tag-location">${getSuburb(j.location)}</span>` : ''}
+        ${j.salary ? `<span class="tag tag-salary">${j.salary}</span>` : ''}
+        ${j.category ? `<span class="tag tag-cat">${j.category}</span>` : ''}
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('listings').innerHTML = html;
+}
+
+function filterCat(el) {
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  activeCategory = el.dataset.cat;
+  filteredListings = activeCategory === 'all' ? allListings : allListings.filter(j => j.category === activeCategory);
+  buildMap(filteredListings);
+  showListings(filteredListings);
+  document.getElementById('clear-filter').classList.remove('visible');
+  updateTooltip('Auckland', { jobs: filteredListings, cats: getCats(filteredListings) });
+}
+
+function clearFilter() {
+  showListings(filteredListings);
+  document.getElementById('listings-label').textContent = `${filteredListings.length} listings`;
+  document.getElementById('clear-filter').classList.remove('visible');
+}
+
+function setQ(el) { document.getElementById('query-input').value = el.textContent; }
 
 async function runQuery() {
   const query = document.getElementById('query-input').value.trim();
   if (!query) return;
   const btn = document.getElementById('query-btn');
-  const area = document.getElementById('answer-area');
+  const box = document.getElementById('answer-box');
   const text = document.getElementById('answer-text');
-  btn.disabled = true; btn.textContent = 'Running...';
-  area.classList.add('visible');
-  document.getElementById('answer-query').textContent = `→ "${query}"`;
+  btn.disabled = true; btn.textContent = '...';
+  box.classList.add('visible');
   text.innerHTML = '<span class="blink">█</span>';
   document.getElementById('answer-cite').textContent = '';
 
   try {
-    // Embed via serverless function
     const embedRes = await fetch('/api/embed', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: query }),
     });
     const { embedding } = await embedRes.json();
 
-    // Vector search in Supabase
     const searchRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/match_jobs`, {
       method: 'POST',
       headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
@@ -230,25 +653,53 @@ async function runQuery() {
       `Title: ${r.title}\nCompany: ${r.company||'Unknown'}\nLocation: ${r.location||'Unknown'}\nCategory: ${r.category}\nSalary: ${r.salary||'Not specified'}\nDescription: ${r.description_snippet||''}`
     ).join('\n\n---\n\n');
 
-    // Claude via serverless function
     const claudeRes = await fetch('/api/query', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query, context }),
     });
     const { answer } = await claudeRes.json();
-    text.textContent = answer || 'No answer generated.';
-    document.getElementById('answer-cite').textContent = `Source: ${results.length} listings · Trade Me + Seek NZ · ${new Date().toLocaleDateString('en-NZ')}`;
+    text.textContent = answer;
+    document.getElementById('answer-cite').textContent = `Based on ${results.length} listings · ${new Date().toLocaleDateString('en-NZ')}`;
+    showListings(results, 'Relevant listings');
+    document.getElementById('clear-filter').classList.add('visible');
   } catch(err) {
     text.textContent = `Error: ${err.message}`;
   } finally {
-    btn.disabled = false; btn.textContent = 'Execute';
+    btn.disabled = false; btn.textContent = 'Ask';
   }
 }
 
 document.getElementById('query-input').addEventListener('keydown', e => { if (e.key === 'Enter') runQuery(); });
-loadStats();
-loadRecent();
+
+async function init() {
+  initMap();
+  allListings = await dbAll('job_listings', 'title,company,location,salary,category,seek_url');
+  filteredListings = allListings;
+
+  const withSalary = allListings.filter(j => j.salary).length;
+  const suburbs = new Set(allListings.map(j => getSuburb(j.location)).filter(s => SUBURB_COORDS[s]));
+
+  document.getElementById('stat-total').textContent = allListings.length.toLocaleString();
+  document.getElementById('stat-salary').textContent = Math.round(withSalary / allListings.length * 100) + '%';
+  document.getElementById('stat-suburbs').textContent = suburbs.size;
+
+  const cats = [...new Set(allListings.map(j => j.category).filter(Boolean))].sort();
+  const chips = document.getElementById('filter-chips');
+  cats.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'chip';
+    btn.dataset.cat = cat;
+    btn.textContent = cat;
+    btn.onclick = () => filterCat(btn);
+    chips.appendChild(btn);
+  });
+
+  buildMap(allListings);
+  showListings(allListings);
+  updateTooltip('Auckland', { jobs: allListings, cats: getCats(allListings) });
+}
+
+init();
 </script>
 </body>
 </html>
