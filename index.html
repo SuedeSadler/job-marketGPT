@@ -132,13 +132,30 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 
 async function db(path) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Range-Unit': 'items', 'Range': '0-4999' }
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
   });
   return res.json();
 }
 
+async function dbAll(table, select) {
+  const pageSize = 1000;
+  let all = [];
+  let offset = 0;
+  while (true) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=${select}&limit=${pageSize}&offset=${offset}`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    const page = await res.json();
+    if (!page?.length) break;
+    all = all.concat(page);
+    if (page.length < pageSize) break;
+    offset += pageSize;
+  }
+  return all;
+}
+
 async function loadStats() {
-  const data = await db('job_listings?select=category,salary,location,scraped_at&limit=5000');
+  const data = await dbAll('job_listings', 'category,salary,location,scraped_at');
   if (!data?.length) return;
   document.getElementById('total-count').textContent = data.length.toLocaleString();
   const cats = {}, regions = {};
