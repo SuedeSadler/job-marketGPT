@@ -4,9 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>job-marketGPT — Auckland</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -42,189 +41,103 @@
     overflow: hidden;
   }
 
-  /* Header */
   .header {
     padding: 18px 20px 14px;
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
   }
 
-  .header-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 2px;
-  }
+  .header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
 
-  .wordmark {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-primary);
-    letter-spacing: -0.02em;
-  }
-
+  .wordmark { font-size: 16px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.02em; }
   .wordmark span { color: var(--accent); }
 
   .live-badge {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 11px;
-    color: var(--green);
-    font-weight: 500;
-    background: var(--green-bg);
-    padding: 3px 8px;
-    border-radius: 20px;
+    display: flex; align-items: center; gap: 5px;
+    font-size: 11px; color: var(--green); font-weight: 500;
+    background: var(--green-bg); padding: 3px 8px; border-radius: 20px;
   }
 
-  .live-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--green);
-    animation: pulse 2s infinite;
-  }
-
+  .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
   .header-sub { font-size: 12px; color: var(--text-muted); }
 
-  /* Stats */
-  .stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-  }
-
-  .stat {
-    padding: 14px 16px;
-    border-right: 1px solid var(--border);
-  }
-
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .stat { padding: 14px 16px; border-right: 1px solid var(--border); }
   .stat:last-child { border-right: none; }
   .stat-val { font-size: 20px; font-weight: 600; color: var(--text-primary); line-height: 1; margin-bottom: 3px; letter-spacing: -0.02em; }
   .stat-label { font-size: 11px; color: var(--text-muted); }
 
-  /* Category filters */
-  .filter-section {
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-  }
-
-  .filter-label {
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-bottom: 8px;
-  }
-
+  /* Category filter — single scrollable row */
+  .filter-section { padding: 10px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .filter-label { font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
   .filter-chips {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
+    display: flex; gap: 6px;
+    overflow-x: auto; padding-bottom: 4px;
+    scrollbar-width: none;
   }
+  .filter-chips::-webkit-scrollbar { display: none; }
 
   .chip {
-    font-size: 12px;
-    padding: 5px 11px;
-    border: 1px solid var(--border-strong);
-    border-radius: 20px;
-    color: var(--text-secondary);
-    cursor: pointer;
-    background: transparent;
-    font-family: var(--sans);
-    transition: all 0.15s;
-    white-space: nowrap;
+    font-size: 12px; padding: 5px 12px;
+    border: 1px solid var(--border-strong); border-radius: 20px;
+    color: var(--text-secondary); cursor: pointer;
+    background: transparent; font-family: var(--sans);
+    transition: all 0.15s; white-space: nowrap; flex-shrink: 0;
   }
 
   .chip:hover { border-color: var(--accent); color: var(--accent); }
   .chip.active { background: var(--accent-bg); border-color: var(--accent); color: var(--accent-text); font-weight: 500; }
 
   /* Query */
-  .query-section {
-    padding: 14px 16px;
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-  }
+  .query-section { padding: 14px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
 
   .query-box {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--bg);
-    border: 1.5px solid var(--border-strong);
-    border-radius: 10px;
-    padding: 8px 12px;
-    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg); border: 1.5px solid var(--border-strong);
+    border-radius: 10px; padding: 8px 12px; margin-bottom: 10px;
     transition: border-color 0.15s;
   }
 
   .query-box:focus-within { border-color: var(--accent); }
-
   .query-icon { color: var(--text-muted); font-size: 15px; flex-shrink: 0; }
 
   .query-input {
-    flex: 1;
-    background: transparent;
-    border: none;
-    color: var(--text-primary);
-    font-family: var(--sans);
-    font-size: 13px;
-    outline: none;
+    flex: 1; background: transparent; border: none;
+    color: var(--text-primary); font-family: var(--sans);
+    font-size: 13px; outline: none;
   }
 
   .query-input::placeholder { color: var(--text-muted); }
 
   .query-btn {
-    background: var(--accent);
-    border: none;
-    color: #fff;
-    font-family: var(--sans);
-    font-size: 12px;
-    font-weight: 600;
-    padding: 6px 14px;
-    border-radius: 7px;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: opacity 0.15s;
+    background: var(--accent); border: none; color: #fff;
+    font-family: var(--sans); font-size: 12px; font-weight: 600;
+    padding: 6px 14px; border-radius: 7px; cursor: pointer;
+    flex-shrink: 0; transition: opacity 0.15s;
   }
 
   .query-btn:hover { opacity: 0.88; }
   .query-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
-  .suggestions {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-  }
+  .suggestions { display: flex; gap: 6px; flex-wrap: wrap; }
 
   .sug {
-    font-size: 11px;
-    border: 1px solid var(--border);
-    color: var(--text-secondary);
-    padding: 4px 10px;
-    border-radius: 20px;
-    cursor: pointer;
-    transition: all 0.15s;
+    font-size: 11px; border: 1px solid var(--border);
+    color: var(--text-secondary); padding: 4px 10px;
+    border-radius: 20px; cursor: pointer; transition: all 0.15s;
     background: var(--panel);
   }
 
   .sug:hover { border-color: var(--accent); color: var(--accent); }
 
-  /* Scroll */
   .scroll-area { flex: 1; overflow-y: auto; }
 
-  /* Answer */
   .answer-box {
-    margin: 12px 16px;
-    padding: 14px 16px;
-    background: var(--accent-bg);
-    border: 1px solid #bfdbfe;
-    border-radius: 10px;
-    display: none;
+    margin: 12px 16px; padding: 14px 16px;
+    background: var(--accent-bg); border: 1px solid #bfdbfe;
+    border-radius: 10px; display: none;
   }
 
   .answer-box.visible { display: block; }
@@ -235,55 +148,26 @@
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
   .blink { animation: blink 1s infinite; }
 
-  /* Listings */
   .listings-head {
-    padding: 12px 16px 6px;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    padding: 12px 16px 6px; font-size: 11px; font-weight: 600;
+    color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em;
+    display: flex; align-items: center; justify-content: space-between;
   }
 
-  .clear-filter {
-    font-size: 11px;
-    color: var(--accent);
-    cursor: pointer;
-    font-weight: 500;
-    display: none;
-  }
-
+  .clear-filter { font-size: 11px; color: var(--accent); cursor: pointer; font-weight: 500; display: none; }
   .clear-filter.visible { display: block; }
 
   .listing-card {
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
-    cursor: pointer;
-    transition: background 0.1s;
+    padding: 12px 16px; border-bottom: 1px solid var(--border);
+    cursor: pointer; transition: background 0.1s;
   }
 
   .listing-card:hover { background: var(--bg); }
-
   .listing-title { font-size: 13px; font-weight: 500; color: var(--text-primary); margin-bottom: 3px; line-height: 1.35; }
   .listing-company { font-size: 12px; color: var(--text-secondary); margin-bottom: 7px; }
 
-  .listing-tags {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-
-  .tag {
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-weight: 500;
-  }
-
+  .listing-tags { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500; }
   .tag-location { background: #f1f5f9; color: #475569; }
   .tag-salary { background: var(--green-bg); color: #166534; }
   .tag-cat { background: var(--bg); color: var(--text-muted); border: 1px solid var(--border); }
@@ -292,63 +176,55 @@
   .right { flex: 1; position: relative; }
   #map { width: 100%; height: 100%; }
 
-  /* Map tooltip */
-  .map-tooltip {
-    position: absolute;
-    top: 16px;
-    left: 16px;
-    z-index: 1000;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 16px;
-    font-family: var(--sans);
-    pointer-events: none;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    min-width: 160px;
+  /* Mapbox popup override */
+  .mapboxgl-popup-content {
+    border-radius: 10px !important;
+    padding: 14px 16px !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12) !important;
+    font-family: var(--sans) !important;
+    min-width: 200px;
   }
 
-  .tooltip-suburb { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
-  .tooltip-count { font-size: 12px; color: var(--text-secondary); }
-  .tooltip-cats { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
-  .tooltip-cat-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-secondary); }
-  .tooltip-cat-bar { height: 3px; border-radius: 2px; background: var(--accent); }
-  .tooltip-cat-label { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .tooltip-cat-val { color: var(--text-muted); flex-shrink: 0; }
+  .mapboxgl-popup-tip { display: none !important; }
 
+  .popup-suburb { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+  .popup-count { font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; }
+  .popup-cats { display: flex; flex-direction: column; gap: 5px; }
+  .popup-cat-row { display: flex; align-items: center; gap: 8px; font-size: 11px; }
+  .popup-cat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .popup-cat-name { flex: 1; color: var(--text-secondary); }
+  .popup-cat-bar-bg { width: 60px; height: 3px; background: #e5e7eb; border-radius: 2px; flex-shrink: 0; }
+  .popup-cat-bar { height: 3px; border-radius: 2px; }
+  .popup-cat-val { color: var(--text-muted); font-weight: 500; min-width: 20px; text-align: right; }
+  .popup-action {
+    margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);
+    font-size: 11px; color: var(--accent); cursor: pointer; font-weight: 500;
+    text-align: center;
+  }
+
+  /* Legend */
   .map-legend {
-    position: absolute;
-    bottom: 24px;
-    right: 16px;
-    z-index: 1000;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 14px;
-    font-size: 11px;
-    color: var(--text-secondary);
+    position: absolute; bottom: 32px; right: 16px; z-index: 10;
+    background: white; border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   }
 
-  .legend-title { font-weight: 600; font-size: 11px; color: var(--text-primary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
-  .legend-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
-  .legend-circle { border-radius: 50%; background: rgba(37,99,235,0.2); border: 2px solid rgba(37,99,235,0.6); flex-shrink: 0; }
-
-  /* Leaflet overrides for light map */
-  .leaflet-control-zoom a { border-radius: 6px !important; }
-  .leaflet-control-attribution { font-size: 10px !important; }
+  .legend-title { font-size: 11px; font-weight: 600; color: var(--text-primary); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .legend-cats { display: flex; flex-direction: column; gap: 5px; }
+  .legend-row { display: flex; align-items: center; gap: 7px; font-size: 11px; color: var(--text-secondary); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 
   @media (max-width: 768px) {
     .app { flex-direction: column; }
-    .left { width: 100%; height: 60vh; overflow-y: auto; }
-    .right { height: 40vh; }
+    .left { width: 100%; height: 55vh; }
+    .right { height: 45vh; }
     html, body { overflow: auto; }
   }
 </style>
 </head>
 <body>
 <div class="app">
-
   <div class="left">
     <div class="header">
       <div class="header-row">
@@ -365,7 +241,7 @@
     </div>
 
     <div class="filter-section">
-      <div class="filter-label">Filter by category</div>
+      <div class="filter-label">Category</div>
       <div class="filter-chips" id="filter-chips">
         <button class="chip active" data-cat="all" onclick="filterCat(this)">All</button>
       </div>
@@ -378,11 +254,11 @@
         <button class="query-btn" id="query-btn" onclick="runQuery()">Ask</button>
       </div>
       <div class="suggestions">
-        <span class="sug" onclick="setQ(this)">Top skills in IT?</span>
+        <span class="sug" onclick="setQ(this)">Top IT skills?</span>
         <span class="sug" onclick="setQ(this)">Remote roles?</span>
-        <span class="sug" onclick="setQ(this)">Best paying jobs?</span>
-        <span class="sug" onclick="setQ(this)">Entry level roles?</span>
-        <span class="sug" onclick="setQ(this)">Most hiring companies?</span>
+        <span class="sug" onclick="setQ(this)">Best paying?</span>
+        <span class="sug" onclick="setQ(this)">Entry level?</span>
+        <span class="sug" onclick="setQ(this)">Most hiring?</span>
       </div>
     </div>
 
@@ -392,10 +268,9 @@
         <div class="answer-text" id="answer-text"></div>
         <div class="answer-cite" id="answer-cite"></div>
       </div>
-
       <div class="listings-head">
         <span id="listings-label">Recent listings</span>
-        <span class="clear-filter" id="clear-filter" onclick="clearFilter()">Clear filter ×</span>
+        <span class="clear-filter" id="clear-filter" onclick="clearFilter()">Clear ×</span>
       </div>
       <div id="listings"></div>
     </div>
@@ -403,21 +278,8 @@
 
   <div class="right">
     <div id="map"></div>
-
-    <div class="map-tooltip" id="map-tooltip">
-      <div class="tooltip-suburb" id="tt-suburb">Auckland</div>
-      <div class="tooltip-count" id="tt-count">Loading listings...</div>
-      <div class="tooltip-cats" id="tt-cats"></div>
-    </div>
-
-    <div class="map-legend">
-      <div class="legend-title">Listings per suburb</div>
-      <div class="legend-row"><div class="legend-circle" style="width:10px;height:10px;"></div><span>1–10</span></div>
-      <div class="legend-row"><div class="legend-circle" style="width:16px;height:16px;"></div><span>11–30</span></div>
-      <div class="legend-row"><div class="legend-circle" style="width:22px;height:22px;"></div><span>30+</span></div>
-    </div>
+    <div class="map-legend" id="map-legend"></div>
   </div>
-
 </div>
 
 <script>
@@ -425,48 +287,67 @@ const SUPABASE_URL = 'https://gbgwxstirnomhthscjei.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdiZ3d4c3Rpcm5vbWh0aHNjamVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzNzY1MjQsImV4cCI6MjA5Nzk1MjUyNH0.JvycUrZHGUq46pfzdWPYWgSlOmyDTpmxPBjyzTtlhD0';
 
 const SUBURB_COORDS = {
-  'Auckland CBD': [-36.8485, 174.7633], 'Auckland': [-36.8485, 174.7633],
-  'Newmarket': [-36.8693, 174.7769], 'Parnell': [-36.8570, 174.7780],
-  'Grafton': [-36.8620, 174.7700], 'Ponsonby': [-36.8530, 174.7470],
-  'Grey Lynn': [-36.8630, 174.7380], 'Kingsland': [-36.8720, 174.7430],
-  'Mount Eden': [-36.8790, 174.7580], 'Epsom': [-36.8930, 174.7700],
-  'Remuera': [-36.8820, 174.7930], 'Mission Bay': [-36.8600, 174.8200],
-  'Takapuna': [-36.7890, 174.7760], 'North Shore City': [-36.7860, 174.7550],
-  'Albany': [-36.7270, 174.7010], 'Browns Bay': [-36.7190, 174.7390],
-  'Rosedale': [-36.7360, 174.7220], 'Devonport': [-36.8280, 174.8010],
-  'Belmont': [-36.8100, 174.7890], 'Orewa': [-36.5870, 174.6940],
-  'Helensville': [-36.6720, 174.4550], 'Kumeu': [-36.7730, 174.5610],
-  'Waimauku': [-36.7890, 174.5090], 'Matakana': [-36.3670, 174.7140],
-  'Dairy Flat': [-36.6670, 174.6580], 'Sandspit': [-36.4420, 174.7430],
-  'Henderson': [-36.8750, 174.6320], 'Henderson Valley': [-36.8860, 174.6090],
-  'West Harbour': [-36.8390, 174.6390], 'Massey': [-36.8520, 174.6330],
-  'New Lynn': [-36.9050, 174.6860], 'Avondale': [-36.9000, 174.7070],
-  'Waitakere City': [-36.8850, 174.6450], 'Westhaven': [-36.8440, 174.7510],
-  'Mount Albert': [-36.8870, 174.7260], 'Mount Roskill': [-36.9110, 174.7350],
-  'Onehunga': [-36.9270, 174.7860], 'Manukau': [-36.9940, 174.8760],
-  'Manurewa': [-37.0220, 174.8970], 'Papatoetoe': [-36.9830, 174.8490],
-  'Otahuhu': [-36.9490, 174.8390], 'Penrose': [-36.9230, 174.8180],
-  'East Tamaki': [-36.9680, 174.8980], 'Pakuranga': [-36.9000, 174.9150],
-  'Botany': [-36.9340, 174.9140], 'Howick': [-36.8980, 174.9330],
-  'Beachlands': [-36.8890, 175.0180], 'Pukekohe': [-37.2020, 174.9010],
-  'Patumahoe': [-37.1680, 174.8560], 'Auckland Airport': [-37.0082, 174.7850],
-  'Mangere': [-36.9820, 174.7980], 'Papakura': [-37.0640, 174.9440],
-  'Westhaven': [-36.8440, 174.7510], 'Wynyard Quarter': [-36.8440, 174.7510],
+  'Auckland CBD': [174.7633, -36.8485], 'Auckland': [174.7633, -36.8485],
+  'Newmarket': [174.7769, -36.8693], 'Parnell': [174.7780, -36.8570],
+  'Grafton': [174.7700, -36.8620], 'Ponsonby': [174.7470, -36.8530],
+  'Grey Lynn': [174.7380, -36.8630], 'Kingsland': [174.7430, -36.8720],
+  'Mount Eden': [174.7580, -36.8790], 'Epsom': [174.7700, -36.8930],
+  'Remuera': [174.7930, -36.8820], 'Mission Bay': [174.8200, -36.8600],
+  'Takapuna': [174.7760, -36.7890], 'North Shore City': [174.7550, -36.7860],
+  'Albany': [174.7010, -36.7270], 'Browns Bay': [174.7390, -36.7190],
+  'Rosedale': [174.7220, -36.7360], 'Devonport': [174.8010, -36.8280],
+  'Belmont': [174.7890, -36.8100], 'Orewa': [174.6940, -36.5870],
+  'Helensville': [174.4550, -36.6720], 'Kumeu': [174.5610, -36.7730],
+  'Waimauku': [174.5090, -36.7890], 'Matakana': [174.7140, -36.3670],
+  'Dairy Flat': [174.6580, -36.6670], 'Sandspit': [174.7430, -36.4420],
+  'Henderson': [174.6320, -36.8750], 'Henderson Valley': [174.6090, -36.8860],
+  'West Harbour': [174.6390, -36.8390], 'Massey': [174.6330, -36.8520],
+  'New Lynn': [174.6860, -36.9050], 'Avondale': [174.7070, -36.9000],
+  'Waitakere City': [174.6450, -36.8850], 'Westhaven': [174.7510, -36.8440],
+  'Mount Albert': [174.7260, -36.8870], 'Mount Roskill': [174.7350, -36.9110],
+  'Onehunga': [174.7860, -36.9270], 'Manukau': [174.8760, -36.9940],
+  'Manurewa': [174.8970, -37.0220], 'Papatoetoe': [174.8490, -36.9830],
+  'Otahuhu': [174.8390, -36.9490], 'Penrose': [174.8180, -36.9230],
+  'East Tamaki': [174.8980, -36.9680], 'Pakuranga': [174.9150, -36.9000],
+  'Botany': [174.9140, -36.9340], 'Howick': [174.9330, -36.8980],
+  'Beachlands': [175.0180, -36.8890], 'Pukekohe': [174.9010, -37.2020],
+  'Patumahoe': [174.8560, -37.1680], 'Auckland Airport': [174.7850, -37.0082],
+  'Mangere': [174.7980, -36.9820], 'Papakura': [174.9440, -37.0640],
+  'Wynyard Quarter': [174.7510, -36.8440], 'Takanini': [174.9160, -37.0500],
 };
 
 const CAT_COLORS = {
-  'IT': '#2563eb', 'Healthcare': '#16a34a', 'Trades & Services': '#d97706',
-  'Engineering': '#7c3aed', 'Accounting': '#0891b2', 'Construction': '#dc2626',
-  'Hospitality': '#db2777', 'Sales': '#ea580c', 'Education': '#65a30d',
-  'Manufacturing, Transport & Logistics': '#475569',
+  'Trades & Services': '#f59e0b',
+  'Construction': '#ef4444',
+  'Healthcare': '#10b981',
+  'Engineering': '#8b5cf6',
+  'IT': '#3b82f6',
+  'Accounting': '#06b6d4',
+  'Education': '#84cc16',
+  'Hospitality': '#ec4899',
+  'Sales': '#f97316',
+  'Manufacturing, Transport & Logistics': '#6b7280',
+  'Administration & Office Support': '#64748b',
+  'Marketing & Communications': '#a855f7',
+  'Healthcare & Medical': '#14b8a6',
+  'Education & Training': '#65a30d',
+  'Hospitality & Tourism': '#db2777',
+  'Human Resources & Recruitment': '#7c3aed',
+  'Information & Communication Technology': '#2563eb',
 };
 
+const DEFAULT_COLOR = '#94a3b8';
+
 let allListings = [], filteredListings = [], activeCategory = 'all';
-let map, heatLayer, circleMarkers = [];
+let map, popup;
 
 function getSuburb(location) {
   if (!location) return 'Auckland';
   return location.split(',')[0].trim();
+}
+
+function getCatColor(cat) {
+  return CAT_COLORS[cat] || DEFAULT_COLOR;
 }
 
 async function dbAll(table, select) {
@@ -486,138 +367,263 @@ async function dbAll(table, select) {
 }
 
 async function initMap() {
-  map = L.map('map', { zoomControl: true }).setView([-36.88, 174.76], 11);
   const tokenRes = await fetch('/api/map-token');
   const { token } = await tokenRes.json();
-  L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/light-v11/tiles/{z}/{x}/{y}?access_token=${token}`, {
-    attribution: '© <a href="https://mapbox.com">Mapbox</a> © <a href="https://openstreetmap.org">OpenStreetMap</a>',
-    tileSize: 512,
-    zoomOffset: -1,
-    maxZoom: 18,
-  }).addTo(map);
+  mapboxgl.accessToken = token;
+
+  map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/light-v11',
+    center: [174.76, -36.86],
+    zoom: 10.5,
+    attributionControl: true,
+  });
+
+  map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+  popup = new mapboxgl.Popup({ closeButton: false, maxWidth: '260px' });
+
+  return new Promise(resolve => map.on('load', resolve));
 }
 
-function buildMap(listings) {
-  // Clear old layers
-  if (heatLayer) map.removeLayer(heatLayer);
-  circleMarkers.forEach(m => map.removeLayer(m));
-  circleMarkers = [];
+function buildGeoJSON(listings) {
+  const features = [];
+  listings.forEach(j => {
+    const suburb = getSuburb(j.location);
+    const coords = SUBURB_COORDS[suburb];
+    if (!coords) return;
+    // Small jitter so dots don't stack exactly
+    const jitter = () => (Math.random() - 0.5) * 0.008;
+    features.push({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [coords[0] + jitter(), coords[1] + jitter()] },
+      properties: {
+        title: j.title,
+        company: j.company,
+        location: j.location,
+        suburb: suburb,
+        salary: j.salary,
+        category: j.category || 'Other',
+        color: getCatColor(j.category),
+        seek_url: j.seek_url,
+      }
+    });
+  });
+  return { type: 'FeatureCollection', features };
+}
 
-  // Group by suburb
+function buildSuburbGeoJSON(listings) {
   const suburbData = {};
   listings.forEach(j => {
     const suburb = getSuburb(j.location);
     const coords = SUBURB_COORDS[suburb];
     if (!coords) return;
-    if (!suburbData[suburb]) suburbData[suburb] = { coords, jobs: [], cats: {} };
-    suburbData[suburb].jobs.push(j);
+    if (!suburbData[suburb]) suburbData[suburb] = { coords, count: 0, cats: {} };
+    suburbData[suburb].count++;
     const cat = j.category || 'Other';
     suburbData[suburb].cats[cat] = (suburbData[suburb].cats[cat] || 0) + 1;
   });
 
-  const counts = Object.values(suburbData).map(d => d.jobs.length);
-  const max = Math.max(...counts);
+  return {
+    type: 'FeatureCollection',
+    features: Object.entries(suburbData).map(([suburb, data]) => ({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: data.coords },
+      properties: { suburb, count: data.count, cats: JSON.stringify(data.cats) }
+    }))
+  };
+}
 
-  // Heatmap layer
-  const heatPoints = Object.values(suburbData).map(d => [
-    d.coords[0], d.coords[1], d.jobs.length / max
-  ]);
-  heatLayer = L.heatLayer(heatPoints, {
-    radius: 40, blur: 35, maxZoom: 13,
-    gradient: { 0.1: '#bfdbfe', 0.4: '#60a5fa', 0.7: '#2563eb', 1.0: '#1d4ed8' }
-  }).addTo(map);
+function addMapLayers(listings) {
+  const dotGeoJSON = buildGeoJSON(listings);
+  const suburbGeoJSON = buildSuburbGeoJSON(listings);
 
-  // Circle markers on top
-  Object.entries(suburbData).forEach(([suburb, data]) => {
-    const count = data.jobs.length;
-    const size = Math.max(10, Math.min(40, 8 + (count / max) * 36));
-
-    const marker = L.circleMarker(data.coords, {
-      radius: size / 2,
-      fillColor: '#2563eb',
-      fillOpacity: 0.15,
-      color: '#2563eb',
-      weight: 2,
-      opacity: 0.7,
-    }).addTo(map);
-
-    // Count label
-    const label = L.divIcon({
-      html: `<div style="
-        font-size:${count > 99 ? 9 : 10}px;
-        font-weight:600;
-        color:#1d4ed8;
-        text-align:center;
-        line-height:${size}px;
-        width:${size}px;
-        pointer-events:none;
-        font-family:-apple-system,sans-serif;
-      ">${count}</div>`,
-      iconSize: [size, size],
-      iconAnchor: [size/2, size/2],
-      className: '',
-    });
-    L.marker(data.coords, { icon: label, interactive: false }).addTo(map);
-
-    marker.on('mouseover', () => updateTooltip(suburb, data));
-    marker.on('click', () => {
-      updateTooltip(suburb, data);
-      showListings(data.jobs, suburb);
-      document.getElementById('clear-filter').classList.add('visible');
-    });
-
-    circleMarkers.push(marker);
+  // Remove existing layers/sources
+  ['dots', 'clusters', 'cluster-count', 'suburb-circles', 'suburb-labels', 'heatmap'].forEach(id => {
+    if (map.getLayer(id)) map.removeLayer(id);
+  });
+  ['dot-source', 'suburb-source'].forEach(id => {
+    if (map.getSource(id)) map.removeSource(id);
   });
 
-  updateTooltip('Auckland', { jobs: listings, cats: getCats(listings) });
+  // Individual dots source with clustering
+  map.addSource('dot-source', {
+    type: 'geojson',
+    data: dotGeoJSON,
+    cluster: true,
+    clusterMaxZoom: 12,
+    clusterRadius: 40,
+  });
+
+  // Suburb summary source
+  map.addSource('suburb-source', {
+    type: 'geojson',
+    data: suburbGeoJSON,
+  });
+
+  // Heatmap — visible at low zoom
+  map.addLayer({
+    id: 'heatmap',
+    type: 'heatmap',
+    source: 'dot-source',
+    maxzoom: 11,
+    paint: {
+      'heatmap-weight': 1,
+      'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 9, 0.6, 11, 1.2],
+      'heatmap-color': [
+        'interpolate', ['linear'], ['heatmap-density'],
+        0, 'rgba(37,99,235,0)',
+        0.2, 'rgba(37,99,235,0.15)',
+        0.5, 'rgba(37,99,235,0.4)',
+        0.8, 'rgba(37,99,235,0.65)',
+        1, 'rgba(29,78,216,0.85)'
+      ],
+      'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 9, 20, 11, 35],
+      'heatmap-opacity': ['interpolate', ['linear'], ['zoom'], 10, 0.8, 11, 0],
+    }
+  });
+
+  // Cluster circles
+  map.addLayer({
+    id: 'clusters',
+    type: 'circle',
+    source: 'dot-source',
+    filter: ['has', 'point_count'],
+    paint: {
+      'circle-color': '#2563eb',
+      'circle-radius': ['step', ['get', 'point_count'], 18, 10, 24, 50, 32, 100, 40],
+      'circle-opacity': 0.85,
+      'circle-stroke-width': 3,
+      'circle-stroke-color': 'rgba(37,99,235,0.2)',
+    }
+  });
+
+  // Cluster count labels
+  map.addLayer({
+    id: 'cluster-count',
+    type: 'symbol',
+    source: 'dot-source',
+    filter: ['has', 'point_count'],
+    layout: {
+      'text-field': '{point_count_abbreviated}',
+      'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+      'text-size': 13,
+    },
+    paint: { 'text-color': '#ffffff' }
+  });
+
+  // Individual dots — coloured by category, visible when zoomed in
+  map.addLayer({
+    id: 'dots',
+    type: 'circle',
+    source: 'dot-source',
+    filter: ['!', ['has', 'point_count']],
+    paint: {
+      'circle-color': ['get', 'color'],
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 11, 4, 14, 7],
+      'circle-opacity': 0.85,
+      'circle-stroke-width': 1.5,
+      'circle-stroke-color': '#ffffff',
+    }
+  });
+
+  // Click cluster → zoom in
+  map.on('click', 'clusters', e => {
+    const features = map.queryRenderedFeatures(e.point, { layers: ['clusters'] });
+    const clusterId = features[0].properties.cluster_id;
+    map.getSource('dot-source').getClusterExpansionZoom(clusterId, (err, zoom) => {
+      if (err) return;
+      map.easeTo({ center: features[0].geometry.coordinates, zoom });
+    });
+  });
+
+  // Click individual dot → popup
+  map.on('click', 'dots', e => {
+    const props = e.features[0].properties;
+    const coords = e.features[0].geometry.coordinates.slice();
+
+    new mapboxgl.Popup({ closeButton: true, maxWidth: '260px' })
+      .setLngLat(coords)
+      .setHTML(`
+        <div style="font-family:-apple-system,sans-serif">
+          <div style="font-size:13px;font-weight:600;color:#1a1816;margin-bottom:3px;line-height:1.3">${props.title || '—'}</div>
+          ${props.company ? `<div style="font-size:12px;color:#6b6560;margin-bottom:6px">${props.company}</div>` : ''}
+          <div style="display:flex;gap:5px;flex-wrap:wrap">
+            ${props.location ? `<span style="font-size:11px;background:#f1f5f9;color:#475569;padding:2px 7px;border-radius:4px">${props.suburb}</span>` : ''}
+            ${props.salary ? `<span style="font-size:11px;background:#f0fdf4;color:#166534;padding:2px 7px;border-radius:4px">${props.salary}</span>` : ''}
+          </div>
+          <div style="margin-top:8px;display:flex;align-items:center;gap:6px">
+            <div style="width:8px;height:8px;border-radius:50%;background:${props.color};flex-shrink:0"></div>
+            <span style="font-size:11px;color:#6b6560">${props.category}</span>
+          </div>
+          ${props.seek_url && props.seek_url !== 'null' ? `<a href="${props.seek_url}" target="_blank" style="display:block;margin-top:10px;padding-top:8px;border-top:1px solid #e8e5df;font-size:11px;color:#2563eb;text-decoration:none;font-weight:500">View listing →</a>` : ''}
+        </div>
+      `)
+      .addTo(map);
+
+    // Also filter left panel to this suburb
+    const suburbJobs = filteredListings.filter(j => getSuburb(j.location) === props.suburb);
+    showListings(suburbJobs, props.suburb);
+    document.getElementById('clear-filter').classList.add('visible');
+  });
+
+  // Cursor changes
+  ['clusters', 'dots'].forEach(layer => {
+    map.on('mouseenter', layer, () => map.getCanvas().style.cursor = 'pointer');
+    map.on('mouseleave', layer, () => map.getCanvas().style.cursor = '');
+  });
 }
 
-function getCats(listings) {
-  const cats = {};
-  listings.forEach(j => { cats[j.category || 'Other'] = (cats[j.category || 'Other'] || 0) + 1; });
-  return cats;
-}
+function buildLegend(listings) {
+  const cats = [...new Set(listings.map(j => j.category).filter(Boolean))];
+  const top = cats
+    .map(c => ({ cat: c, count: listings.filter(j => j.category === c).length }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 8);
 
-function updateTooltip(suburb, data) {
-  document.getElementById('tt-suburb').textContent = suburb;
-  document.getElementById('tt-count').textContent = `${data.jobs.length} listing${data.jobs.length !== 1 ? 's' : ''}`;
-
-  const sorted = Object.entries(data.cats).sort((a,b) => b[1]-a[1]).slice(0, 4);
-  const topCount = sorted[0]?.[1] || 1;
-  document.getElementById('tt-cats').innerHTML = sorted.map(([cat, count]) => `
-    <div class="tooltip-cat-row">
-      <span class="tooltip-cat-label">${cat}</span>
-      <div class="tooltip-cat-bar" style="width:${Math.round(count/topCount*60)}px; background:${CAT_COLORS[cat]||'#6b7280'}"></div>
-      <span class="tooltip-cat-val">${count}</span>
+  document.getElementById('map-legend').innerHTML = `
+    <div class="legend-title">Category</div>
+    <div class="legend-cats">
+      ${top.map(({ cat, count }) => `
+        <div class="legend-row">
+          <div class="legend-dot" style="background:${getCatColor(cat)}"></div>
+          <span>${cat}</span>
+          <span style="margin-left:auto;color:#a8a49e;font-size:10px">${count}</span>
+        </div>
+      `).join('')}
     </div>
-  `).join('');
+  `;
 }
 
 function showListings(listings, label) {
-  document.getElementById('listings-label').textContent = label ? `${label} — ${listings.length} listings` : `${listings.length} listings`;
-  const html = listings.slice(0, 60).map(j => `
+  document.getElementById('listings-label').textContent = label
+    ? `${label} — ${listings.length} listings`
+    : `${listings.length} listings`;
+
+  document.getElementById('listings').innerHTML = listings.slice(0, 60).map(j => `
     <div class="listing-card" onclick="${j.seek_url ? `window.open('${j.seek_url}','_blank')` : ''}">
       <div class="listing-title">${j.title || '—'}</div>
       ${j.company ? `<div class="listing-company">${j.company}</div>` : ''}
       <div class="listing-tags">
         ${j.location ? `<span class="tag tag-location">${getSuburb(j.location)}</span>` : ''}
         ${j.salary ? `<span class="tag tag-salary">${j.salary}</span>` : ''}
-        ${j.category ? `<span class="tag tag-cat">${j.category}</span>` : ''}
+        ${j.category ? `<span class="tag tag-cat" style="border-left:3px solid ${getCatColor(j.category)}">${j.category}</span>` : ''}
       </div>
     </div>
   `).join('');
-  document.getElementById('listings').innerHTML = html;
 }
 
 function filterCat(el) {
   document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
   el.classList.add('active');
   activeCategory = el.dataset.cat;
-  filteredListings = activeCategory === 'all' ? allListings : allListings.filter(j => j.category === activeCategory);
-  buildMap(filteredListings);
+  filteredListings = activeCategory === 'all'
+    ? allListings
+    : allListings.filter(j => j.category === activeCategory);
+
+  addMapLayers(filteredListings);
+  buildLegend(filteredListings);
   showListings(filteredListings);
   document.getElementById('clear-filter').classList.remove('visible');
-  updateTooltip('Auckland', { jobs: filteredListings, cats: getCats(filteredListings) });
 }
 
 function clearFilter() {
@@ -665,8 +671,18 @@ async function runQuery() {
     const { answer } = await claudeRes.json();
     text.textContent = answer;
     document.getElementById('answer-cite').textContent = `Based on ${results.length} listings · ${new Date().toLocaleDateString('en-NZ')}`;
+
+    // Highlight relevant listings on map
+    const relevantSuburbs = [...new Set(results.map(r => getSuburb(r.location)))];
     showListings(results, 'Relevant listings');
     document.getElementById('clear-filter').classList.add('visible');
+
+    // Fly to first result
+    if (results[0]?.location) {
+      const suburb = getSuburb(results[0].location);
+      const coords = SUBURB_COORDS[suburb];
+      if (coords) map.flyTo({ center: coords, zoom: 12, duration: 1200 });
+    }
   } catch(err) {
     text.textContent = `Error: ${err.message}`;
   } finally {
@@ -678,6 +694,7 @@ document.getElementById('query-input').addEventListener('keydown', e => { if (e.
 
 async function init() {
   await initMap();
+
   allListings = await dbAll('job_listings', 'title,company,location,salary,category,seek_url');
   filteredListings = allListings;
 
@@ -688,6 +705,7 @@ async function init() {
   document.getElementById('stat-salary').textContent = Math.round(withSalary / allListings.length * 100) + '%';
   document.getElementById('stat-suburbs').textContent = suburbs.size;
 
+  // Category chips — single scrollable row
   const cats = [...new Set(allListings.map(j => j.category).filter(Boolean))].sort();
   const chips = document.getElementById('filter-chips');
   cats.forEach(cat => {
@@ -699,9 +717,9 @@ async function init() {
     chips.appendChild(btn);
   });
 
-  buildMap(allListings);
+  addMapLayers(allListings);
+  buildLegend(allListings);
   showListings(allListings);
-  updateTooltip('Auckland', { jobs: allListings, cats: getCats(allListings) });
 }
 
 init();
