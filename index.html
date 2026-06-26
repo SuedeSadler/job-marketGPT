@@ -216,10 +216,215 @@
   .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 
   @media (max-width: 768px) {
-    .app { flex-direction: column; }
-    .left { width: 100%; height: 55vh; }
-    .right { height: 45vh; }
-    html, body { overflow: auto; }
+    html, body { height: 100%; overflow: hidden; }
+
+    /* Hide desktop layout */
+    .app { display: block; height: 100vh; position: relative; }
+    .left { display: none; }
+    .right { width: 100%; height: 100%; }
+    .map-legend { display: none; }
+
+    /* Floating search bar at top */
+    .mobile-search {
+      display: flex !important;
+      position: absolute;
+      top: 12px; left: 12px; right: 12px;
+      z-index: 100;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.15);
+      padding: 10px 14px;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mobile-search input {
+      flex: 1; border: none; outline: none;
+      font-size: 14px; color: var(--text-primary);
+      font-family: var(--sans);
+      background: transparent;
+    }
+
+    .mobile-search input::placeholder { color: var(--text-muted); }
+
+    .mobile-search-btn {
+      background: var(--accent); color: white;
+      border: none; border-radius: 8px;
+      padding: 6px 12px; font-size: 12px;
+      font-weight: 600; cursor: pointer;
+      font-family: var(--sans);
+    }
+
+    /* Bottom sheet */
+    .mobile-sheet {
+      display: flex !important;
+      flex-direction: column;
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      z-index: 100;
+      background: white;
+      border-radius: 20px 20px 0 0;
+      box-shadow: 0 -4px 30px rgba(0,0,0,0.12);
+      transition: height 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+      height: 100px;
+      overflow: hidden;
+    }
+
+    .mobile-sheet.peek { height: 100px; }
+    .mobile-sheet.half { height: 55vh; }
+    .mobile-sheet.full { height: 90vh; }
+
+    /* Drag handle */
+    .sheet-handle {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 16px 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .sheet-handle-bar {
+      width: 36px; height: 4px;
+      background: #d1d5db; border-radius: 2px;
+      margin-bottom: 10px;
+    }
+
+    .sheet-peek-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+
+    .sheet-peek-title {
+      font-size: 14px; font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .sheet-peek-sub {
+      font-size: 12px; color: var(--text-muted);
+    }
+
+    .sheet-peek-expand {
+      font-size: 11px; color: var(--accent);
+      font-weight: 500;
+    }
+
+    /* Sheet content — hidden until half/full */
+    .sheet-content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .mobile-sheet.half .sheet-content,
+    .mobile-sheet.full .sheet-content {
+      opacity: 1;
+    }
+
+    /* Category chips inside sheet */
+    .sheet-cats {
+      padding: 0 16px 10px;
+      display: flex; gap: 6px;
+      overflow-x: auto; flex-shrink: 0;
+      scrollbar-width: none;
+    }
+    .sheet-cats::-webkit-scrollbar { display: none; }
+
+    .sheet-chip {
+      font-size: 12px; padding: 5px 12px;
+      border: 1px solid var(--border-strong); border-radius: 20px;
+      color: var(--text-secondary); cursor: pointer;
+      background: transparent; font-family: var(--sans);
+      white-space: nowrap; flex-shrink: 0;
+      transition: all 0.15s;
+    }
+
+    .sheet-chip.active {
+      background: var(--accent-bg); border-color: var(--accent);
+      color: var(--accent-text); font-weight: 500;
+    }
+
+    /* Answer box in sheet */
+    .sheet-answer {
+      margin: 0 16px 12px;
+      padding: 12px 14px;
+      background: var(--accent-bg); border: 1px solid #bfdbfe;
+      border-radius: 10px; display: none; flex-shrink: 0;
+    }
+
+    .sheet-answer.visible { display: block; }
+    .sheet-answer-label { font-size: 10px; font-weight: 600; color: var(--accent-text); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+    .sheet-answer-text { font-size: 13px; color: #1e3a6e; line-height: 1.65; white-space: pre-wrap; }
+    .sheet-answer-cite { margin-top: 8px; font-size: 10px; color: #6b9be8; }
+
+    /* Job cards in sheet */
+    .sheet-listings-head {
+      padding: 4px 16px 6px;
+      font-size: 11px; font-weight: 600;
+      color: var(--text-muted); text-transform: uppercase;
+      letter-spacing: 0.06em; flex-shrink: 0;
+    }
+
+    /* Mini job card — tapped from map dot */
+    .mini-card {
+      display: none;
+      position: absolute;
+      bottom: 110px; left: 12px; right: 12px;
+      z-index: 99;
+      background: white;
+      border-radius: 14px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      padding: 14px 16px;
+    }
+
+    .mini-card.visible { display: block; }
+    .mini-card-title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 3px; line-height: 1.3; }
+    .mini-card-company { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
+    .mini-card-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+    .mini-card-actions { display: flex; gap: 8px; }
+    .mini-card-btn {
+      flex: 1; padding: 9px; border-radius: 8px;
+      font-size: 13px; font-weight: 500; text-align: center;
+      cursor: pointer; border: none; font-family: var(--sans);
+    }
+    .mini-card-btn.primary { background: var(--accent); color: white; }
+    .mini-card-btn.secondary { background: var(--bg); color: var(--text-secondary); border: 1px solid var(--border); }
+    .mini-card-close {
+      position: absolute; top: 10px; right: 12px;
+      font-size: 18px; color: var(--text-muted); cursor: pointer;
+      line-height: 1;
+    }
+
+    /* Quick suburb filters */
+    .suburb-pills {
+      position: absolute;
+      top: 70px; left: 12px; right: 12px;
+      z-index: 99;
+      display: flex !important;
+      gap: 6px; overflow-x: auto;
+      scrollbar-width: none;
+      padding-bottom: 2px;
+    }
+    .suburb-pills::-webkit-scrollbar { display: none; }
+    .suburb-pill {
+      font-size: 12px; font-weight: 500;
+      padding: 6px 12px;
+      background: white; border: none;
+      border-radius: 20px;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.12);
+      color: var(--text-secondary);
+      cursor: pointer; white-space: nowrap;
+      font-family: var(--sans);
+      transition: all 0.15s; flex-shrink: 0;
+    }
+    .suburb-pill.active { background: var(--accent); color: white; }
   }
 </style>
 </head>
@@ -282,7 +487,68 @@
   </div>
 </div>
 
+<!-- MOBILE ONLY UI -->
+<div class="mobile-search" style="display:none">
+  <span style="font-size:15px">🔍</span>
+  <input id="mobile-query-input" type="text" placeholder="Ask about Auckland jobs..." />
+  <button class="mobile-search-btn" onclick="mobileRunQuery()">Ask</button>
+</div>
+
+<div class="suburb-pills" style="display:none">
+  <button class="suburb-pill active" data-suburb="all" onclick="mobileFilterSuburb(this)">All Auckland</button>
+  <button class="suburb-pill" data-suburb="Auckland CBD" onclick="mobileFilterSuburb(this)">CBD</button>
+  <button class="suburb-pill" data-suburb="Takapuna" onclick="mobileFilterSuburb(this)">North Shore</button>
+  <button class="suburb-pill" data-suburb="Henderson" onclick="mobileFilterSuburb(this)">West</button>
+  <button class="suburb-pill" data-suburb="Manukau" onclick="mobileFilterSuburb(this)">South</button>
+  <button class="suburb-pill" data-suburb="East Tamaki" onclick="mobileFilterSuburb(this)">East</button>
+</div>
+
+<!-- Mini card — appears when dot is tapped -->
+<div class="mini-card" id="mini-card">
+  <span class="mini-card-close" onclick="closeMiniCard()">×</span>
+  <div class="mini-card-title" id="mini-title"></div>
+  <div class="mini-card-company" id="mini-company"></div>
+  <div class="mini-card-tags" id="mini-tags"></div>
+  <div class="mini-card-actions">
+    <button class="mini-card-btn primary" id="mini-view" onclick="">View listing</button>
+    <button class="mini-card-btn secondary" onclick="closeMiniCard()">Dismiss</button>
+  </div>
+</div>
+
+<!-- Bottom sheet -->
+<div class="mobile-sheet peek" id="mobile-sheet">
+  <div class="sheet-handle" onclick="cycleSheet()">
+    <div class="sheet-handle-bar"></div>
+    <div class="sheet-peek-row">
+      <div>
+        <div class="sheet-peek-title" id="sheet-title">Auckland jobs</div>
+        <div class="sheet-peek-sub" id="sheet-sub">Loading...</div>
+      </div>
+      <div class="sheet-peek-expand" id="sheet-expand">Tap to explore ↑</div>
+    </div>
+  </div>
+
+  <div class="sheet-content" id="sheet-content">
+    <!-- Category chips -->
+    <div class="sheet-cats" id="sheet-cats">
+      <button class="sheet-chip active" data-cat="all" onclick="mobileFilterCat(this)">All</button>
+    </div>
+
+    <!-- Answer -->
+    <div class="sheet-answer" id="sheet-answer">
+      <div class="sheet-answer-label">Analysis</div>
+      <div class="sheet-answer-text" id="sheet-answer-text"></div>
+      <div class="sheet-answer-cite" id="sheet-answer-cite"></div>
+    </div>
+
+    <!-- Listings -->
+    <div class="sheet-listings-head" id="sheet-listings-label">Recent listings</div>
+    <div id="sheet-listings"></div>
+  </div>
+</div>
+
 <script>
+
 const SUPABASE_URL = 'https://gbgwxstirnomhthscjei.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdiZ3d4c3Rpcm5vbWh0aHNjamVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzNzY1MjQsImV4cCI6MjA5Nzk1MjUyNH0.JvycUrZHGUq46pfzdWPYWgSlOmyDTpmxPBjyzTtlhD0';
 
@@ -536,8 +802,9 @@ function addMapLayers(listings) {
     });
   });
 
-  // Click individual dot → popup
+  // Click individual dot → popup (desktop) or mini card (mobile)
   map.on('click', 'dots', e => {
+    if (isMobile()) return; // handled by initMobileSheet
     const props = e.features[0].properties;
     const coords = e.features[0].geometry.coordinates.slice();
 
@@ -720,9 +987,259 @@ async function init() {
   addMapLayers(allListings);
   buildLegend(allListings);
   showListings(allListings);
+  initMobileSheet();
 }
 
 init();
+
+// ── MOBILE BOTTOM SHEET ──────────────────────────────────────────
+
+const isMobile = () => window.innerWidth <= 768;
+const sheetStates = ['peek', 'half', 'full'];
+let sheetState = 'peek';
+let mobileActiveSuburb = 'all';
+let mobileActiveCategory = 'all';
+let touchStartY = 0, touchStartState = 'peek';
+
+function cycleSheet() {
+  if (!isMobile()) return;
+  const sheet = document.getElementById('mobile-sheet');
+  const idx = sheetStates.indexOf(sheetState);
+  sheetState = sheetStates[(idx + 1) % sheetStates.length];
+  sheet.className = 'mobile-sheet ' + sheetState;
+  updateSheetExpand();
+}
+
+function openSheet(state) {
+  if (!isMobile()) return;
+  sheetState = state;
+  const sheet = document.getElementById('mobile-sheet');
+  sheet.className = 'mobile-sheet ' + state;
+  updateSheetExpand();
+}
+
+function updateSheetExpand() {
+  const el = document.getElementById('sheet-expand');
+  if (sheetState === 'peek') el.textContent = 'Tap to explore ↑';
+  else if (sheetState === 'half') el.textContent = 'More ↑';
+  else el.textContent = 'Collapse ↓';
+}
+
+// Touch drag to resize sheet
+const sheet = document.getElementById('mobile-sheet');
+const handle = sheet?.querySelector('.sheet-handle');
+if (handle) {
+  handle.addEventListener('touchstart', e => {
+    touchStartY = e.touches[0].clientY;
+    touchStartState = sheetState;
+  }, { passive: true });
+
+  handle.addEventListener('touchend', e => {
+    const dy = touchStartY - e.changedTouches[0].clientY;
+    if (dy > 40) {
+      // Swipe up
+      if (touchStartState === 'peek') openSheet('half');
+      else if (touchStartState === 'half') openSheet('full');
+    } else if (dy < -40) {
+      // Swipe down
+      if (touchStartState === 'full') openSheet('half');
+      else if (touchStartState === 'half') openSheet('peek');
+    } else {
+      cycleSheet();
+    }
+  }, { passive: true });
+}
+
+function mobileShowListings(listings, label) {
+  if (!isMobile()) return;
+  document.getElementById('sheet-listings-label').textContent =
+    label ? label + ' — ' + listings.length + ' listings' : listings.length + ' listings';
+  document.getElementById('sheet-title').textContent =
+    label || 'Auckland jobs';
+  document.getElementById('sheet-sub').textContent =
+    listings.length + ' listings';
+
+  document.getElementById('sheet-listings').innerHTML = listings.slice(0, 40).map(j => `
+    <div class="listing-card" style="padding:12px 16px" onclick="${j.seek_url ? `window.open('${j.seek_url}','_blank')` : ''}">
+      <div class="listing-title">${j.title || '—'}</div>
+      ${j.company ? `<div class="listing-company">${j.company}</div>` : ''}
+      <div class="listing-tags">
+        ${j.location ? `<span class="tag tag-location">${getSuburb(j.location)}</span>` : ''}
+        ${j.salary ? `<span class="tag tag-salary">${j.salary}</span>` : ''}
+        ${j.category ? `<span class="tag tag-cat" style="border-left:3px solid ${getCatColor(j.category)}">${j.category}</span>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function mobileFilterSuburb(el) {
+  if (!isMobile()) return;
+  document.querySelectorAll('.suburb-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  mobileActiveSuburb = el.dataset.suburb;
+
+  let listings = filteredListings;
+  if (mobileActiveSuburb !== 'all') {
+    listings = filteredListings.filter(j => getSuburb(j.location) === mobileActiveSuburb);
+    const coords = SUBURB_COORDS[mobileActiveSuburb];
+    if (coords) map.flyTo({ center: coords, zoom: 13, duration: 800 });
+  } else {
+    map.flyTo({ center: [174.76, -36.86], zoom: 10.5, duration: 800 });
+  }
+
+  mobileShowListings(listings, mobileActiveSuburb !== 'all' ? mobileActiveSuburb : null);
+  openSheet('half');
+}
+
+function mobileFilterCat(el) {
+  document.querySelectorAll('.sheet-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  mobileActiveCategory = el.dataset.cat;
+
+  filteredListings = mobileActiveCategory === 'all'
+    ? allListings
+    : allListings.filter(j => j.category === mobileActiveCategory);
+
+  addMapLayers(filteredListings);
+  const listings = mobileActiveSuburb !== 'all'
+    ? filteredListings.filter(j => getSuburb(j.location) === mobileActiveSuburb)
+    : filteredListings;
+
+  mobileShowListings(listings);
+  openSheet('half');
+}
+
+function closeMiniCard() {
+  document.getElementById('mini-card').classList.remove('visible');
+}
+
+function showMiniCard(props) {
+  if (!isMobile()) return;
+  const card = document.getElementById('mini-card');
+  document.getElementById('mini-title').textContent = props.title || '—';
+  document.getElementById('mini-company').textContent = props.company || '';
+  document.getElementById('mini-tags').innerHTML = `
+    ${props.location ? `<span class="tag tag-location">${props.suburb || getSuburb(props.location)}</span>` : ''}
+    ${props.salary && props.salary !== 'null' ? `<span class="tag tag-salary">${props.salary}</span>` : ''}
+    ${props.category ? `<span class="tag tag-cat" style="border-left:3px solid ${getCatColor(props.category)}">${props.category}</span>` : ''}
+  `;
+  const btn = document.getElementById('mini-view');
+  if (props.seek_url && props.seek_url !== 'null') {
+    btn.style.display = 'block';
+    btn.onclick = () => window.open(props.seek_url, '_blank');
+  } else {
+    btn.style.display = 'none';
+  }
+  card.classList.add('visible');
+
+  // Snap sheet to peek when mini card shows
+  openSheet('peek');
+}
+
+// Override dot click on mobile to show mini card
+function mobileMapDotClick(e) {
+  if (!isMobile()) return;
+  const props = e.features[0].properties;
+  showMiniCard(props);
+  const suburbJobs = filteredListings.filter(j => getSuburb(j.location) === props.suburb);
+  document.getElementById('sheet-sub').textContent = props.suburb + ' · ' + suburbJobs.length + ' listings';
+}
+
+async function mobileRunQuery() {
+  if (!isMobile()) return;
+  const query = document.getElementById('mobile-query-input').value.trim();
+  if (!query) return;
+
+  const btn = document.querySelector('.mobile-search-btn');
+  btn.textContent = '...'; btn.disabled = true;
+
+  const answerBox = document.getElementById('sheet-answer');
+  const answerText = document.getElementById('sheet-answer-text');
+  answerBox.classList.add('visible');
+  answerText.innerHTML = '<span class="blink">█</span>';
+  document.getElementById('sheet-answer-cite').textContent = '';
+  openSheet('half');
+
+  try {
+    const embedRes = await fetch('/api/embed', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: query }),
+    });
+    const { embedding } = await embedRes.json();
+
+    const searchRes = await fetch(SUPABASE_URL + '/rest/v1/rpc/match_jobs', {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query_embedding: embedding, match_count: 25 }),
+    });
+    const results = await searchRes.json();
+    if (!results?.length) { answerText.textContent = 'No relevant listings found.'; return; }
+
+    const context = results.map(r =>
+      'Title: ' + r.title + '\nCompany: ' + (r.company||'Unknown') + '\nLocation: ' + (r.location||'Unknown') + '\nCategory: ' + r.category + '\nSalary: ' + (r.salary||'Not specified') + '\nDescription: ' + (r.description_snippet||'')
+    ).join('\n\n---\n\n');
+
+    const claudeRes = await fetch('/api/query', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, context }),
+    });
+    const { answer } = await claudeRes.json();
+    answerText.textContent = answer;
+    document.getElementById('sheet-answer-cite').textContent = 'Based on ' + results.length + ' listings · ' + new Date().toLocaleDateString('en-NZ');
+
+    mobileShowListings(results, 'Relevant listings');
+    openSheet('full');
+
+    if (results[0]?.location) {
+      const suburb = getSuburb(results[0].location);
+      const coords = SUBURB_COORDS[suburb];
+      if (coords) map.flyTo({ center: coords, zoom: 12, duration: 1000 });
+    }
+  } catch(err) {
+    answerText.textContent = 'Error: ' + err.message;
+  } finally {
+    btn.textContent = 'Ask'; btn.disabled = false;
+  }
+}
+
+document.getElementById('mobile-query-input')?.addEventListener('keydown', e => {
+  if (e.key === 'Enter') mobileRunQuery();
+});
+
+// Populate mobile sheet chips after data loads
+function initMobileSheet() {
+  if (!isMobile()) return;
+
+  document.getElementById('sheet-sub').textContent = allListings.length.toLocaleString() + ' listings';
+  document.getElementById('sheet-title').textContent = 'Auckland jobs';
+
+  const cats = [...new Set(allListings.map(j => j.category).filter(Boolean))].sort();
+  const sheetCats = document.getElementById('sheet-cats');
+  cats.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'sheet-chip';
+    btn.dataset.cat = cat;
+    btn.textContent = cat;
+    btn.onclick = () => mobileFilterCat(btn);
+    sheetCats.appendChild(btn);
+  });
+
+  mobileShowListings(allListings);
+
+  // Override the dot click handler for mobile
+  map.on('click', 'dots', e => {
+    if (isMobile()) {
+      mobileMapDotClick(e);
+    }
+  });
+}
+
+// Call after init
+const origInit = init;
+window.addEventListener('load', () => {
+  // initMobileSheet is called at end of init after data loads
+});
+
 </script>
 </body>
 </html>
