@@ -239,4 +239,4 @@ curl https://your-railway-url.up.railway.app/
 
 ---
 
-Built by Nancy Qin · 2026
+Built by Suede Sadler
