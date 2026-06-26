@@ -236,55 +236,65 @@
 
   .emb-header {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 20px; border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
+    padding: 14px 20px; border-bottom: 1px solid #222;
+    flex-shrink: 0; background: #000;
   }
-  .emb-title { font-size: 14px; font-weight: 500; color: var(--text-primary); }
-  .emb-sub { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+  .emb-title { font-size: 14px; font-weight: 500; color: #e2e8f0; }
+  .emb-sub { font-size: 12px; color: #64748b; margin-top: 1px; }
   .emb-close {
-    font-size: 13px; color: var(--text-secondary);
+    font-size: 13px; color: #94a3b8;
     cursor: pointer; padding: 6px 12px;
-    border: 1px solid var(--border); border-radius: 8px;
+    border: 1px solid #333; border-radius: 8px;
     background: transparent; font-family: var(--sans);
   }
-  .emb-close:hover { background: var(--bg); }
-  .emb-body { flex: 1; position: relative; overflow: hidden; }
+  .emb-close:hover { background: #111; }
+  .emb-body { flex: 1; position: relative; overflow: hidden; background: #000; }
   .emb-canvas { width: 100%; height: 100%; }
+  #emb-svg { width: 100%; height: 100%; }
 
   .emb-tooltip {
-    position: absolute; background: var(--panel);
-    border: 1px solid var(--border); border-radius: 8px;
+    position: absolute; background: rgba(0,0,0,0.9);
+    border: 1px solid #333; border-radius: 8px;
     padding: 8px 12px; font-size: 12px;
     pointer-events: none; display: none;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    box-shadow: 0 2px 20px rgba(0,0,0,0.5);
     max-width: 220px; z-index: 10;
   }
-  .emb-tooltip-title { font-weight: 500; color: var(--text-primary); margin-bottom: 2px; }
-  .emb-tooltip-meta { color: var(--text-secondary); font-size: 11px; margin-bottom: 2px; }
-  .emb-tooltip-loc { color: var(--text-muted); font-size: 11px; }
+  .emb-tooltip-title { font-weight: 500; color: #e2e8f0; margin-bottom: 2px; }
+  .emb-tooltip-meta { color: #94a3b8; font-size: 11px; margin-bottom: 2px; }
+  .emb-tooltip-loc { color: #475569; font-size: 11px; }
 
   .emb-legend {
     position: absolute; bottom: 16px; left: 16px;
-    background: var(--panel); border: 1px solid var(--border);
+    background: rgba(0,0,0,0.85); border: 1px solid #222;
     border-radius: 10px; padding: 10px 14px;
     display: flex; flex-direction: column; gap: 5px;
     max-height: 300px; overflow-y: auto;
   }
-  .emb-legend-title { font-size: 10px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
-  .emb-legend-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-secondary); cursor: pointer; }
+  .emb-legend-title { font-size: 10px; font-weight: 500; color: #475569; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+  .emb-legend-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #94a3b8; cursor: pointer; }
   .emb-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .emb-legend-row.dimmed { opacity: 0.35; }
+  .emb-legend-row.dimmed { opacity: 0.25; }
 
   .emb-info {
     position: absolute; top: 16px; right: 16px;
-    background: var(--panel); border: 1px solid var(--border);
+    background: rgba(0,0,0,0.75); border: 1px solid #222;
     border-radius: 8px; padding: 8px 12px;
-    font-size: 11px; color: var(--text-muted);
+    font-size: 11px; color: #475569;
     max-width: 220px;
   }
 
   @media (max-width: 768px) {
-    .emb-legend { display: none; }
+    .emb-legend {
+      bottom: 8px; left: 8px; right: 8px;
+      flex-direction: row; flex-wrap: nowrap;
+      overflow-x: auto; overflow-y: hidden;
+      gap: 10px; padding: 8px 12px;
+      max-height: none;
+    }
+    .emb-legend-title { display: none; }
+    .emb-info { display: none; }
+    .emb-legend-row { flex-shrink: 0; }
   }
 
   @media (max-width: 768px) {
@@ -572,7 +582,7 @@
     <button class="emb-close" onclick="closeEmbedding()">Close ×</button>
   </div>
   <div class="emb-body">
-    <canvas class="emb-canvas" id="emb-canvas"></canvas>
+    <svg id="emb-svg"></svg>
     <div class="emb-tooltip" id="emb-tooltip">
       <div class="emb-tooltip-title" id="ett"></div>
       <div class="emb-tooltip-meta" id="etm"></div>
@@ -617,6 +627,9 @@
 
 <!-- Bottom sheet -->
 <div class="mobile-sheet peek" id="mobile-sheet">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px 0;flex-shrink:0">
+    <button class="emb-btn" style="font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid #d1d5db;color:#6b7280;cursor:pointer;background:transparent;font-family:var(--sans)" onclick="openEmbedding()">Embedding space</button>
+  </div>
   <div class="sheet-handle" onclick="cycleSheet()">
     <div class="sheet-handle-bar"></div>
     <div class="sheet-peek-row">
@@ -1135,31 +1148,34 @@ const EMB_COLORS = {
   'Administration & Office Support': '#64748B',
   'Marketing & Communications': '#A855F7',
   'Healthcare & Medical': '#14B8A6', 'Education & Training': '#65A30D',
-  'Hospitality & Tourism': '#DB2777', 'Information & Communication Technology': '#2563eb',
+  'Hospitality & Tourism': '#DB2777',
+  'Information & Communication Technology': '#2563eb',
+  'Call Centre & Customer Service': '#F97316',
+  'Community Services & Development': '#8B5CF6',
+  'Government & Defence': '#64748B',
+  'Human Resources & Recruitment': '#EC4899',
+  'Legal': '#A78BFA',
+  'Retail & Consumer Products': '#FB923C',
+  'Farming, Animals & Conservation': '#4ADE80',
 };
-
-const DEFAULT_EMB_COLOR = '#94A3B8';
+const EMB_DEFAULT = '#475569';
 
 let embPoints = [];
-let embHovered = -1;
 let embFilter = null;
 let embReady = false;
+let embSim = null;
+let embSvg = null;
 
-// Deterministic pseudo-random from seed
-// Project listings into 2D space based on category clusters + jitter
 async function loadUmapCoords() {
   const res = await fetch('/umap_coords.json');
   const data = await res.json();
-
-  // Normalise x/y to 0-1 range
   const xs = data.map(p => p.x);
   const ys = data.map(p => p.y);
   const minX = Math.min(...xs), maxX = Math.max(...xs);
   const minY = Math.min(...ys), maxY = Math.max(...ys);
-
   return data.map(p => ({
-    x: (p.x - minX) / (maxX - minX),
-    y: (p.y - minY) / (maxY - minY),
+    ux: (p.x - minX) / (maxX - minX),
+    uy: (p.y - minY) / (maxY - minY),
     title: p.title,
     company: p.company,
     location: p.location,
@@ -1168,137 +1184,121 @@ async function loadUmapCoords() {
   }));
 }
 
-function drawEmbedding() {
-  const canvas = document.getElementById('emb-canvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const W = canvas.width, H = canvas.height;
-  const PAD = 30;
-
-  ctx.clearRect(0, 0, W, H);
-
-  embPoints.forEach((p, i) => {
-    if (embFilter && p.category !== embFilter) return;
-    const sx = PAD + p.x * (W - PAD * 2);
-    const sy = PAD + p.y * (H - PAD * 2);
-    const color = EMB_COLORS[p.category] || DEFAULT_EMB_COLOR;
-    const isHov = i === embHovered;
-    const r = isHov ? 7 : 4;
-    ctx.beginPath();
-    ctx.arc(sx, sy, r, 0, Math.PI * 2);
-    ctx.fillStyle = isHov ? color : color + 'aa';
-    ctx.fill();
-    if (isHov) {
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    }
-  });
-}
-
 function buildEmbLegend() {
   const cats = [...new Set(embPoints.map(p => p.category))].sort();
   const legend = document.getElementById('emb-legend');
-  const existing = legend.querySelector('.emb-legend-title');
-  legend.innerHTML = '';
-  const title = document.createElement('div');
-  title.className = 'emb-legend-title';
-  title.textContent = 'Category';
-  legend.appendChild(title);
+  legend.innerHTML = '<div class="emb-legend-title">Category</div>';
 
   const allRow = document.createElement('div');
-  allRow.className = 'emb-legend-row' + (embFilter ? '' : '');
-  allRow.innerHTML = '<div class="emb-legend-dot" style="background:#888"></div>All';
-  allRow.onclick = () => { embFilter = null; buildEmbLegend(); drawEmbedding(); };
+  allRow.className = 'emb-legend-row';
+  allRow.innerHTML = '<div class="emb-legend-dot" style="background:#555"></div>All';
+  allRow.onclick = () => { embFilter = null; updateFilter(); buildEmbLegend(); };
   legend.appendChild(allRow);
 
   cats.forEach(cat => {
-    const row = document.createElement('div');
     const count = embPoints.filter(p => p.category === cat).length;
-    const color = EMB_COLORS[cat] || DEFAULT_EMB_COLOR;
+    const color = EMB_COLORS[cat] || EMB_DEFAULT;
+    const row = document.createElement('div');
     row.className = 'emb-legend-row' + (embFilter && embFilter !== cat ? ' dimmed' : '');
-    row.innerHTML = `<div class="emb-legend-dot" style="background:${color}"></div>${cat} <span style="margin-left:auto;color:var(--text-muted);font-size:10px">${count}</span>`;
-    row.onclick = () => {
-      embFilter = embFilter === cat ? null : cat;
-      buildEmbLegend();
-      drawEmbedding();
-    };
+    row.innerHTML = `<div class="emb-legend-dot" style="background:${color}"></div><span style="flex:1">${cat}</span><span style="color:#334155;font-size:10px">${count}</span>`;
+    row.onclick = () => { embFilter = embFilter === cat ? null : cat; updateFilter(); buildEmbLegend(); };
     legend.appendChild(row);
   });
 }
 
+function updateFilter() {
+  if (!embSvg) return;
+  embSvg.selectAll('circle')
+    .attr('opacity', d => !embFilter || d.category === embFilter ? 0.85 : 0.06)
+    .attr('r', d => !embFilter || d.category === embFilter ? 3.5 : 2);
+}
+
 async function openEmbedding() {
   document.getElementById('emb-overlay').classList.add('open');
+  if (embReady) return;
 
-  if (embReady) { drawEmbedding(); return; }
-
-  document.getElementById('emb-sub').textContent = 'Loading UMAP coordinates...';
-
-  const canvas = document.getElementById('emb-canvas');
-  const body = document.getElementById('emb-overlay').querySelector('.emb-body');
-  canvas.width = body.offsetWidth;
-  canvas.height = body.offsetHeight;
+  document.getElementById('emb-sub').textContent = 'Loading real UMAP coordinates...';
 
   try {
     embPoints = await loadUmapCoords();
     embReady = true;
     document.getElementById('emb-sub').textContent =
-      embPoints.length.toLocaleString() + ' listings · real UMAP projection · click a category to filter';
+      embPoints.length.toLocaleString() + ' listings · real UMAP · hover to explore';
     buildEmbLegend();
-    drawEmbedding();
+    initForceGraph();
   } catch(err) {
-    document.getElementById('emb-sub').textContent = 'Failed to load coordinates: ' + err.message;
+    document.getElementById('emb-sub').textContent = 'Error: ' + err.message;
   }
+}
 
-  // Mouse events
-  canvas.onmousemove = (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
-    const my = (e.clientY - rect.top) * (canvas.height / rect.height);
-    const PAD = 30;
-    const W = canvas.width, H = canvas.height;
+function initForceGraph() {
+  const container = document.getElementById('emb-overlay').querySelector('.emb-body');
+  const W = container.offsetWidth;
+  const H = container.offsetHeight;
+  const PAD = 40;
 
-    let closest = -1, minD = 12;
-    embPoints.forEach((p, i) => {
-      if (embFilter && p.category !== embFilter) return;
-      const sx = PAD + p.x * (W - PAD * 2);
-      const sy = PAD + p.y * (H - PAD * 2);
-      const d = Math.sqrt((mx - sx) ** 2 + (my - sy) ** 2);
-      if (d < minD) { minD = d; closest = i; }
+  const svgEl = document.getElementById('emb-svg');
+  svgEl.setAttribute('width', W);
+  svgEl.setAttribute('height', H);
+
+  const d3Script = document.createElement('script');
+  d3Script.src = 'https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js';
+  d3Script.onload = () => renderForce(W, H, PAD);
+  document.head.appendChild(d3Script);
+}
+
+function renderForce(W, H, PAD) {
+  const nodes = embPoints.map(p => ({
+    ...p,
+    tx: PAD + p.ux * (W - PAD * 2),
+    ty: PAD + p.uy * (H - PAD * 2),
+    x: W / 2 + (Math.random() - 0.5) * 100,
+    y: H / 2 + (Math.random() - 0.5) * 100,
+  }));
+
+  embSvg = d3.select('#emb-svg');
+  embSvg.selectAll('*').remove();
+
+  const tip = document.getElementById('emb-tooltip');
+
+  const circles = embSvg.selectAll('circle')
+    .data(nodes)
+    .enter().append('circle')
+    .attr('r', 3.5)
+    .attr('fill', d => EMB_COLORS[d.category] || EMB_DEFAULT)
+    .attr('opacity', 0.85)
+    .attr('cx', d => d.x)
+    .attr('cy', d => d.y)
+    .on('mouseover touchstart', function(event, d) {
+      event.preventDefault && event.preventDefault();
+      d3.select(this).attr('r', 7).attr('opacity', 1);
+      document.getElementById('ett').textContent = d.title || '—';
+      document.getElementById('etm').textContent = [d.company, d.salary].filter(Boolean).join(' · ');
+      document.getElementById('etl').textContent = d.location || '';
+      document.getElementById('etl').style.borderLeft = '3px solid ' + (EMB_COLORS[d.category] || EMB_DEFAULT);
+      tip.style.display = 'block';
+      const ex = event.touches ? event.touches[0].clientX - container.getBoundingClientRect().left : event.offsetX;
+      const ey = event.touches ? event.touches[0].clientY - container.getBoundingClientRect().top : event.offsetY;
+      tip.style.left = Math.min(ex + 14, W - 240) + 'px';
+      tip.style.top = Math.max(ey - 60, 8) + 'px';
+    })
+    .on('mouseout touchend', function() {
+      d3.select(this).attr('r', 3.5).attr('opacity', embFilter && embFilter !== d3.select(this).datum().category ? 0.06 : 0.85);
+      tip.style.display = 'none';
     });
 
-    embHovered = closest;
-    const tip = document.getElementById('emb-tooltip');
-    if (closest >= 0) {
-      const p = embPoints[closest];
-      const sx = PAD + p.x * (W - PAD * 2);
-      const sy = PAD + p.y * (H - PAD * 2);
-      document.getElementById('ett').textContent = p.title || '—';
-      document.getElementById('etm').textContent = (p.company || '') + (p.salary ? ' · ' + p.salary : '');
-      document.getElementById('etl').textContent = p.location || '';
-      document.getElementById('etl').style.borderLeft = '3px solid ' + (EMB_COLORS[p.category] || '#888');
-      tip.style.display = 'block';
-      tip.style.left = Math.min(sx + 14, W - 230) + 'px';
-      tip.style.top = Math.max(sy - 30, 0) + 'px';
-      canvas.style.cursor = 'pointer';
-    } else {
-      tip.style.display = 'none';
-      canvas.style.cursor = 'crosshair';
-    }
-    drawEmbedding();
-  };
+  // Force simulation — pulls nodes toward UMAP target positions
+  const sim = d3.forceSimulation(nodes)
+    .force('x', d3.forceX(d => d.tx).strength(0.08))
+    .force('y', d3.forceY(d => d.ty).strength(0.08))
+    .force('collide', d3.forceCollide(4).strength(0.3))
+    .alpha(1)
+    .alphaDecay(0.02)
+    .on('tick', () => {
+      circles.attr('cx', d => d.x).attr('cy', d => d.y);
+    });
 
-  canvas.onmouseleave = () => {
-    embHovered = -1;
-    document.getElementById('emb-tooltip').style.display = 'none';
-    drawEmbedding();
-  };
-
-  window.addEventListener('resize', () => {
-    canvas.width = body.offsetWidth;
-    canvas.height = body.offsetHeight;
-    drawEmbedding();
-  });
+  embSim = sim;
 }
 
 function closeEmbedding() {
