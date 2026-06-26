@@ -142,7 +142,7 @@
 
   .answer-box.visible { display: block; }
   .answer-label { font-size: 11px; font-weight: 600; color: var(--accent-text); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
-  .answer-text { font-size: 13px; color: #1e3a6e; line-height: 1.7; white-space: pre-wrap; }
+  .answer-text { font-size: 13px; color: #1e3a6e; line-height: 1.7; white-space: normal; }
   .answer-cite { margin-top: 10px; font-size: 11px; color: #6b9be8; }
 
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
@@ -361,7 +361,7 @@
 
     .sheet-answer.visible { display: block; }
     .sheet-answer-label { font-size: 10px; font-weight: 600; color: var(--accent-text); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
-    .sheet-answer-text { font-size: 13px; color: #1e3a6e; line-height: 1.65; white-space: pre-wrap; }
+    .sheet-answer-text { font-size: 13px; color: #1e3a6e; line-height: 1.65; white-space: normal; }
     .sheet-answer-cite { margin-top: 8px; font-size: 10px; color: #6b9be8; }
 
     /* Job cards in sheet */
@@ -949,13 +949,14 @@ async function runQuery() {
     });
 
     const reader = claudeRes.body.getReader();
-    const decoder = new TextDecoder();
+    const decoder = new TextDecoder('utf-8', { fatal: false });
     let fullAnswer = '';
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      fullAnswer += decoder.decode(value, { stream: true });
-      text.textContent = fullAnswer;
+      const chunk = decoder.decode(value);
+      fullAnswer += chunk;
+      text.innerHTML = formatAnswer(fullAnswer);
     }
     document.getElementById('answer-cite').textContent = `Based on ${results.length} listings · ${new Date().toLocaleDateString('en-NZ')}`;
   } catch(err) {
@@ -966,6 +967,30 @@ async function runQuery() {
 }
 
 document.getElementById('query-input').addEventListener('keydown', e => { if (e.key === 'Enter') runQuery(); });
+
+function formatAnswer(raw) {
+  const lines = raw.split("\n");
+  let html = "";
+  for (const line of lines) {
+    const t = line.trim();
+    if (!t) { html += "<br>"; continue; }
+    // Bold job title lines: **Title** at Company
+    const boldLine = t.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+    // Arrow lines (job examples)
+    if (t.startsWith("\u2192") || t.startsWith("->") || t.startsWith("\u00bb")) {
+      html += '<div style="font-size:12px;color:#6b6560;margin:2px 0 6px 0;padding-left:10px;border-left:2px solid #bfdbfe">' + boldLine.replace(/^[\u2192\->&]+\s*/, "") + "</div>";
+    } else if (/^[\u2022\-\*]\s/.test(t)) {
+      html += '<div style="display:flex;gap:6px;margin:4px 0"><span style="color:#2563eb;flex-shrink:0">&#8226;</span><span>' + boldLine.slice(2) + "</span></div>";
+    } else if (/^\d+\.\s/.test(t)) {
+      html += '<div style="display:flex;gap:6px;margin:4px 0"><span style="color:#2563eb;flex-shrink:0;font-weight:600">' + t.match(/^\d+/)[0] + ".</span><span>" + boldLine.replace(/^\d+\.\s/, "") + "</span></div>";
+    } else if (t.startsWith("Takeaway:")) {
+      html += '<div style="margin-top:10px;padding:8px 12px;background:#f0fdf4;border-radius:6px;font-size:12px;color:#166534;font-weight:500">' + boldLine + "</div>";
+    } else {
+      html += "<div>" + boldLine + "</div>";
+    }
+  }
+  return html;
+}
 
 async function init() {
   await initMap();
@@ -1205,13 +1230,13 @@ async function mobileRunQuery() {
     });
 
     const mobileReader = claudeRes.body.getReader();
-    const mobileDecoder = new TextDecoder();
+    const mobileDecoder = new TextDecoder('utf-8', { fatal: false });
     let mobileAnswer = '';
     while (true) {
       const { done, value } = await mobileReader.read();
       if (done) break;
-      mobileAnswer += mobileDecoder.decode(value, { stream: true });
-      answerText.textContent = mobileAnswer;
+      mobileAnswer += mobileDecoder.decode(value);
+      answerText.innerHTML = formatAnswer(mobileAnswer);
     }
     document.getElementById('sheet-answer-cite').textContent = 'Based on ' + results.length + ' listings · ' + new Date().toLocaleDateString('en-NZ');
   } catch(err) {
