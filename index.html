@@ -1146,45 +1146,26 @@ let embFilter = null;
 let embReady = false;
 
 // Deterministic pseudo-random from seed
-function seededRandom(seed) {
-  let s = seed;
-  return function() {
-    s = (s * 1664525 + 1013904223) & 0xffffffff;
-    return (s >>> 0) / 0xffffffff;
-  };
-}
-
 // Project listings into 2D space based on category clusters + jitter
-function projectListings(listings) {
-  const CLUSTER_CENTERS = {
-    'IT': [0.15, 0.20], 'Information & Communication Technology': [0.15, 0.20],
-    'Healthcare': [0.75, 0.15], 'Healthcare & Medical': [0.75, 0.15],
-    'Trades & Services': [0.12, 0.75], 'Engineering': [0.50, 0.18],
-    'Construction': [0.42, 0.72], 'Sales': [0.78, 0.68],
-    'Education': [0.48, 0.45], 'Education & Training': [0.48, 0.45],
-    'Hospitality': [0.28, 0.50], 'Hospitality & Tourism': [0.28, 0.50],
-    'Accounting': [0.65, 0.38], 'Manufacturing, Transport & Logistics': [0.30, 0.82],
-    'Administration & Office Support': [0.62, 0.58],
-    'Marketing & Communications': [0.72, 0.52],
-  };
+async function loadUmapCoords() {
+  const res = await fetch('/umap_coords.json');
+  const data = await res.json();
 
-  return listings.map((j, i) => {
-    const rng = seededRandom(i * 7 + 3);
-    const cat = j.category || 'Other';
-    const center = CLUSTER_CENTERS[cat] || [0.5 + (rng() - 0.5) * 0.8, 0.5 + (rng() - 0.5) * 0.8];
-    const spread = 0.12;
-    const angle = rng() * Math.PI * 2;
-    const r = Math.pow(rng(), 0.5) * spread;
-    return {
-      x: Math.max(0.02, Math.min(0.98, center[0] + Math.cos(angle) * r)),
-      y: Math.max(0.02, Math.min(0.98, center[1] + Math.sin(angle) * r)),
-      title: j.title,
-      company: j.company,
-      location: j.location,
-      category: cat,
-      salary: j.salary,
-    };
-  });
+  // Normalise x/y to 0-1 range
+  const xs = data.map(p => p.x);
+  const ys = data.map(p => p.y);
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+
+  return data.map(p => ({
+    x: (p.x - minX) / (maxX - minX),
+    y: (p.y - minY) / (maxY - minY),
+    title: p.title,
+    company: p.company,
+    location: p.location,
+    category: p.category || 'Other',
+    salary: p.salary,
+  }));
 }
 
 function drawEmbedding() {
@@ -1246,28 +1227,28 @@ function buildEmbLegend() {
   });
 }
 
-function openEmbedding() {
+async function openEmbedding() {
   document.getElementById('emb-overlay').classList.add('open');
 
   if (embReady) { drawEmbedding(); return; }
 
-  if (allListings.length === 0) {
-    document.getElementById('emb-sub').textContent = 'Loading...';
-    return;
-  }
-
-  embPoints = projectListings(allListings);
-  embReady = true;
-  document.getElementById('emb-sub').textContent =
-    embPoints.length.toLocaleString() + ' listings projected to 2D · click a category to filter';
+  document.getElementById('emb-sub').textContent = 'Loading UMAP coordinates...';
 
   const canvas = document.getElementById('emb-canvas');
   const body = document.getElementById('emb-overlay').querySelector('.emb-body');
   canvas.width = body.offsetWidth;
   canvas.height = body.offsetHeight;
 
-  buildEmbLegend();
-  drawEmbedding();
+  try {
+    embPoints = await loadUmapCoords();
+    embReady = true;
+    document.getElementById('emb-sub').textContent =
+      embPoints.length.toLocaleString() + ' listings · real UMAP projection · click a category to filter';
+    buildEmbLegend();
+    drawEmbedding();
+  } catch(err) {
+    document.getElementById('emb-sub').textContent = 'Failed to load coordinates: ' + err.message;
+  }
 
   // Mouse events
   canvas.onmousemove = (e) => {
