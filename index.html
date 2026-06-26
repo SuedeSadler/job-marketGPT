@@ -922,7 +922,7 @@ async function runQuery() {
     const searchRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/match_jobs`, {
       method: 'POST',
       headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query_embedding: embedding, match_count: 25 }),
+      body: JSON.stringify({ query_embedding: embedding, match_count: 50 }),
     });
     const results = await searchRes.json();
     if (!results?.length) { text.textContent = 'No relevant listings found.'; return; }
@@ -958,7 +958,7 @@ async function runQuery() {
       fullAnswer += chunk;
       text.innerHTML = formatAnswer(fullAnswer);
     }
-    document.getElementById('answer-cite').textContent = `Based on ${results.length} listings · ${new Date().toLocaleDateString('en-NZ')}`;
+    document.getElementById('answer-cite').textContent = `Analysed ${results.length} relevant listings from ${allListings.length.toLocaleString()} Auckland jobs · ${new Date().toLocaleDateString('en-NZ')}`;
   } catch(err) {
     text.textContent = `Error: ${err.message}`;
   } finally {
@@ -1203,7 +1203,7 @@ async function mobileRunQuery() {
     const searchRes = await fetch(SUPABASE_URL + '/rest/v1/rpc/match_jobs', {
       method: 'POST',
       headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query_embedding: embedding, match_count: 25 }),
+      body: JSON.stringify({ query_embedding: embedding, match_count: 50 }),
     });
     const results = await searchRes.json();
     if (!results?.length) { answerText.textContent = 'No relevant listings found.'; return; }
@@ -1238,7 +1238,7 @@ async function mobileRunQuery() {
       mobileAnswer += mobileDecoder.decode(value);
       answerText.innerHTML = formatAnswer(mobileAnswer);
     }
-    document.getElementById('sheet-answer-cite').textContent = 'Based on ' + results.length + ' listings · ' + new Date().toLocaleDateString('en-NZ');
+    document.getElementById('sheet-answer-cite').textContent = 'Analysed ' + results.length + ' relevant listings from ' + allListings.length.toLocaleString() + ' Auckland jobs · ' + new Date().toLocaleDateString('en-NZ');
   } catch(err) {
     answerText.textContent = 'Error: ' + err.message;
   } finally {

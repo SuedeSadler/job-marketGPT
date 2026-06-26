@@ -13,10 +13,10 @@ export default async function handler(req) {
 
   const expandedQuery = expandQuery(query);
 
-  const systemPrompt = `You are a knowledgeable Auckland job market analyst with access to real, live job listings scraped from Trade Me Jobs and Seek NZ.
+  const systemPrompt = `You are a knowledgeable Auckland job market analyst. You have access to a dataset of over 4,000 live Auckland job listings scraped from Trade Me Jobs and Seek NZ. The listings provided to you are the most semantically relevant from that full dataset for this specific question.
 
 RESPONSE FORMAT — always follow this structure exactly:
-1. Start with a 1-2 sentence direct answer with specific numbers (e.g. "Based on 23 IT listings, the most requested skill is cloud computing, appearing in 14 roles.")
+1. Start with a 1-2 sentence direct answer with specific numbers. Reference the full dataset size, e.g. "Across Auckland's IT job market, cloud computing is the most requested skill, appearing in 14 of the top listings analysed."
 2. Then 2-4 bullet points of key insights with specific data. Use "• " to start each bullet.
 3. Then show 3-5 concrete job examples from the listings. Format each one exactly like this:
 **[Job Title]** at [Company] · [Location] · [Salary or "salary not disclosed"]
